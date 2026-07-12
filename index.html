@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>D278 Exam Game</title>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Karla:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#F3F5F1; --ink:#26302B; --dim:#5C6B62; --line:#DDE3DC;
+    --u1:#3E7CB1; --u1s:#E4EEF6;
+    --u2:#C4682E; --u2s:#F8EADF;
+    --u3:#4E8D6E; --u3s:#E3F0E9;
+    --miss:#B04747; --misss:#FBEAEA;
+    --gold:#E8B84B; --hook:#7A5FA0;
+    --ok:#4E8D6E; --bad:#B04747;
+    --r:16px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+  body{background:var(--paper);color:var(--ink);font-family:'Karla',sans-serif;min-height:100vh}
+  .wrap{max-width:520px;margin:0 auto;padding:18px 16px 40px}
+  h1,h2,h3,.btn,.mode-title,.tag{font-family:'Sora',sans-serif}
+
+  /* HEADER */
+  header{text-align:center;padding:10px 0 4px}
+  .kicker{font-size:10px;font-weight:700;letter-spacing:2px;color:var(--dim);text-transform:uppercase;font-family:'Sora',sans-serif}
+  h1{font-size:26px;font-weight:800;margin-top:4px}
+  header p{color:var(--dim);font-size:13px;margin-top:4px}
+
+  /* HOME */
+  .mode-card{width:100%;text-align:left;background:#fff;border:1px solid var(--line);border-radius:var(--r);
+    padding:18px;margin-top:14px;cursor:pointer;transition:transform .12s;font-family:inherit}
+  .mode-card:active{transform:scale(.98)}
+  .mode-title{font-size:17px;font-weight:800;display:flex;align-items:center;gap:10px}
+  .mode-emoji{font-size:22px}
+  .mode-sub{color:var(--dim);font-size:13px;margin-top:5px;line-height:1.45}
+  .miss-card{background:var(--misss);border-color:#E5C4C4}
+  .miss-card .mode-title{color:var(--miss)}
+
+  /* DECK PICKER */
+  .deck-row{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0 4px}
+  .deck-btn{flex:1 1 44%;font-family:'Sora',sans-serif;font-size:12.5px;font-weight:700;padding:12px 8px;
+    border-radius:12px;border:1.5px solid var(--line);background:#fff;color:var(--dim);cursor:pointer}
+  .deck-btn.active{color:#fff}
+  .deck-btn.d0.active{background:var(--ink);border-color:var(--ink)}
+  .deck-btn.d1.active{background:var(--u1);border-color:var(--u1)}
+  .deck-btn.d2.active{background:var(--u2);border-color:var(--u2)}
+  .deck-btn.d3.active{background:var(--u3);border-color:var(--u3)}
+  .deck-btn.dm.active{background:var(--miss);border-color:var(--miss)}
+
+  /* SHARED GAME UI */
+  .topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+  .back{font-family:'Sora',sans-serif;font-size:13px;font-weight:700;color:var(--dim);background:none;border:none;cursor:pointer;padding:8px 8px 8px 0}
+  .progress-txt{font-size:12px;color:var(--dim);font-weight:700;font-family:'Sora',sans-serif}
+  .pbar{height:6px;background:#E3E8E2;border-radius:6px;overflow:hidden;margin-bottom:16px}
+  .pfill{height:100%;border-radius:6px;transition:width .3s;background:var(--ink)}
+  .tag{display:inline-block;font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;
+    padding:4px 12px;border-radius:20px;margin-bottom:12px}
+  .t1{background:var(--u1s);color:var(--u1)} .t2{background:var(--u2s);color:var(--u2)}
+  .t3{background:var(--u3s);color:var(--u3)} .tm{background:var(--misss);color:var(--miss)}
+
+  /* FLIP CARD */
+  .scene{perspective:1100px;height:300px;cursor:pointer;margin-bottom:14px}
+  .cardi{position:relative;width:100%;height:100%;transform-style:preserve-3d;transition:transform .5s cubic-bezier(.4,0,.2,1)}
+  .scene.flipped .cardi{transform:rotateY(180deg)}
+  @media (prefers-reduced-motion: reduce){.cardi{transition:none}}
+  .face{position:absolute;inset:0;border-radius:var(--r);display:flex;flex-direction:column;align-items:center;
+    justify-content:center;padding:26px;text-align:center;backface-visibility:hidden;-webkit-backface-visibility:hidden;border:1px solid var(--line)}
+  .front{background:#fff}
+  .backf{background:var(--ink);color:#F3F5F1;transform:rotateY(180deg)}
+  .face-label{font-family:'Sora',sans-serif;font-size:9px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--dim);margin-bottom:14px}
+  .backf .face-label{color:#8FA096}
+  .kw{font-family:'Sora',sans-serif;font-size:20px;font-weight:800;line-height:1.35}
+  .kw.code{font-family:'Karla',monospace;font-size:15px;font-weight:700;white-space:pre-wrap;text-align:left}
+  .ans{font-family:'Sora',sans-serif;font-size:21px;font-weight:800;color:var(--gold);line-height:1.3}
+  .why{font-size:13.5px;line-height:1.5;margin-top:12px;color:#D4DCD5}
+  .tapnote{font-size:11px;color:var(--dim);margin-top:16px}
+  .grade{display:flex;gap:10px}
+  .btn{flex:1;font-size:14px;font-weight:700;padding:15px;border-radius:14px;border:none;cursor:pointer;transition:transform .1s}
+  .btn:active{transform:scale(.97)}
+  .btn-again{background:#fff;border:1.5px solid var(--miss);color:var(--miss)}
+  .btn-got{background:var(--u3);color:#fff}
+  .btn-dark{background:var(--ink);color:#fff}
+
+  /* SPEED MATCH + TRACE */
+  .prompt-box{background:#fff;border:1px solid var(--line);border-radius:var(--r);padding:26px 20px;text-align:center;margin-bottom:14px;min-height:120px;display:flex;flex-direction:column;justify-content:center}
+  .prompt-box .kw.code{background:var(--ink);color:#EAF2EC;padding:16px;border-radius:12px}
+  .opts{display:flex;flex-direction:column;gap:9px}
+  .opt{font-family:'Karla',sans-serif;font-size:14.5px;font-weight:500;text-align:left;padding:14px 16px;border-radius:12px;
+    border:1.5px solid var(--line);background:#fff;color:var(--ink);cursor:pointer;white-space:pre-wrap}
+  .opt.mono{font-family:'Karla',monospace;font-weight:700}
+  .opt:disabled{cursor:default}
+  .opt.right{background:var(--u3s);border-color:var(--ok);color:var(--ok);font-weight:700}
+  .opt.wrong{background:var(--misss);border-color:var(--bad);color:var(--bad)}
+  .feedback{font-size:13px;line-height:1.5;margin-top:12px;padding:12px 14px;border-radius:12px;display:none}
+  .feedback.show{display:block}
+  .fb-ok{background:var(--u3s);color:#2E5A44}
+  .fb-bad{background:var(--misss);color:#6B2E2E}
+  .streak-row{display:flex;justify-content:center;gap:16px;margin-bottom:12px;font-family:'Sora',sans-serif;font-size:12px;font-weight:700;color:var(--dim)}
+  .streak-row b{color:var(--ink)}
+  .nextbtn{width:100%;margin-top:12px;display:none}
+  .nextbtn.show{display:block}
+
+  /* DONE SCREEN */
+  .done{background:#fff;border:1px solid var(--line);border-radius:var(--r);padding:30px 22px;text-align:center}
+  .done-big{font-family:'Sora',sans-serif;font-size:44px;font-weight:800;color:var(--u3)}
+  .done-sub{color:var(--dim);font-size:14px;margin:8px 0 18px;line-height:1.5}
+  .hidden{display:none}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<!-- ============ HOME ============ -->
+<div id="home">
+  <header>
+    <div class="kicker">D278 · Scripting & Programming · Chapter 1 · Game Mode</div>
+    <h1>Exam Game</h1>
+    <p>Same content as your Chapter 1 study app — now you play it instead of reading it.</p>
+  </header>
+
+  <div class="deck-row" id="deckRow">
+    <button class="deck-btn d0 active" data-deck="all" onclick="setDeck('all',this)">Everything</button>
+    <button class="deck-btn dm" data-deck="trap" onclick="setDeck('trap',this)">🔴 Exam Traps</button>
+    <button class="deck-btn d1" data-deck="1" onclick="setDeck('1',this)">Core Coral</button>
+    <button class="deck-btn d2" data-deck="2" onclick="setDeck('2',this)">Bits & Binary</button>
+    <button class="deck-btn d3" data-deck="3" onclick="setDeck('3',this)">Concepts</button>
+    <button class="deck-btn dm" id="weakDeckBtn" data-deck="weak" style="display:none" onclick="setDeck('weak',this)">📋 Most Missed (0)</button>
+  </div>
+
+  <button class="mode-card" id="resumeCard" style="display:none;background:var(--ink);border-color:var(--ink)" onclick="resumeFlip()">
+    <div class="mode-title" style="color:#F3F5F1"><span class="mode-emoji">▶️</span>Resume where you left off</div>
+    <div class="mode-sub" id="resumeSub" style="color:#B8C4BC"></div>
+  </button>
+
+  <button class="mode-card" onclick="startFlip()">
+    <div class="mode-title"><span class="mode-emoji">🃏</span>Flip Cards</div>
+    <div class="mode-sub">Keyword on the front, answer + why on the back. Tap "Again" and the card sneaks back into the deck until you own it.</div>
+  </button>
+
+  <button class="mode-card" onclick="startMatch()">
+    <div class="mode-title"><span class="mode-emoji">⚡</span>Speed Match</div>
+    <div class="mode-sub">The exam's real skill: see the keyword, pick the answer from 4 options. Build a streak. No timer — just you vs. the keywords.</div>
+  </button>
+
+  <button class="mode-card" onclick="startTrace()">
+    <div class="mode-title"><span class="mode-emoji">🔍</span>Trace the Output</div>
+    <div class="mode-sub">A Coral snippet appears — predict exactly what it prints. This is competency 3: read the code, call the output. Pause 3 seconds before you tap.</div>
+  </button>
+
+  <button class="mode-card miss-card" id="reviewCard" style="display:none" onclick="showReview()">
+    <div class="mode-title"><span class="mode-emoji">📋</span>Review My Misses</div>
+    <div class="mode-sub" id="reviewSub"></div>
+  </button>
+
+  <p style="text-align:center;color:var(--dim);font-size:11.5px;margin-top:18px" id="saveNote">
+    Loading your progress…
+  </p>
+</div>
+
+<!-- ============ FLIP ============ -->
+<div id="flip" class="hidden">
+  <div class="topbar">
+    <button class="back" onclick="goHome()">← Home</button>
+    <span class="progress-txt" id="flipProg"></span>
+  </div>
+  <div class="pbar"><div class="pfill" id="flipBar" style="width:0%"></div></div>
+  <div style="text-align:center"><span class="tag" id="flipTag"></span></div>
+  <div class="scene" id="scene" onclick="this.classList.toggle('flipped')">
+    <div class="cardi">
+      <div class="face front">
+        <div class="face-label">The exam says…</div>
+        <div class="kw" id="flipQ"></div>
+        <div class="tapnote">tap to reveal →</div>
+      </div>
+      <div class="face backf">
+        <div class="face-label">Your answer</div>
+        <div class="ans" id="flipA"></div>
+        <div class="why" id="flipW"></div>
+      </div>
+    </div>
+  </div>
+  <div class="grade">
+    <button class="btn btn-again" onclick="grade(false)">↺ Again</button>
+    <button class="btn btn-got" onclick="grade(true)">✓ Got it</button>
+  </div>
+  <div class="done hidden" id="flipDone">
+    <div class="done-big">🎉</div>
+    <div class="done-sub" id="flipDoneTxt"></div>
+    <button class="btn btn-dark" style="width:100%" onclick="startFlip()">Run it again</button>
+  </div>
+</div>
+
+<!-- ============ MATCH ============ -->
+<div id="match" class="hidden">
+  <div class="topbar">
+    <button class="back" onclick="goHome()">← Home</button>
+    <span class="progress-txt" id="matchProg"></span>
+  </div>
+  <div class="streak-row">
+    <span>Streak <b id="streak">0</b></span>
+    <span>Best <b id="best">0</b></span>
+    <span>Right <b id="mScore">0</b></span>
+  </div>
+  <div style="text-align:center"><span class="tag" id="matchTag"></span></div>
+  <div class="prompt-box"><div class="kw" id="matchQ"></div></div>
+  <div class="opts" id="matchOpts"></div>
+  <div class="feedback" id="matchFb"></div>
+  <button class="btn btn-dark nextbtn" id="matchNext" onclick="nextMatch()">Next →</button>
+</div>
+
+<!-- ============ TRACE ============ -->
+<div id="trace" class="hidden">
+  <div class="topbar">
+    <button class="back" onclick="goHome()">← Home</button>
+    <span class="progress-txt" id="traceProg"></span>
+  </div>
+  <div class="streak-row">
+    <span>Right <b id="tScore">0</b></span>
+    <span>Of <b id="tTotal">0</b></span>
+  </div>
+  <div class="prompt-box">
+    <div class="face-label" style="margin-bottom:10px">What does this print?</div>
+    <div class="kw code" id="traceQ"></div>
+  </div>
+  <div class="opts" id="traceOpts"></div>
+  <div class="feedback" id="traceFb"></div>
+  <button class="btn btn-dark nextbtn" id="traceNext" onclick="nextTrace()">Next →</button>
+</div>
+
+<!-- ============ REVIEW ============ -->
+<div id="review" class="hidden">
+  <div class="topbar">
+    <button class="back" onclick="goHome()">← Home</button>
+    <span class="progress-txt" id="revCount"></span>
+  </div>
+  <div style="text-align:center"><span class="tag tm">📋 Your miss list</span></div>
+  <p style="color:var(--dim);font-size:13px;text-align:center;margin-bottom:14px">
+    Sorted by most-missed. Get a card right in Flip Cards and it works its way off this list.
+  </p>
+  <div id="revList"></div>
+  <button class="btn btn-dark" style="width:100%;margin-top:14px" onclick="drillWeak()">🃏 Drill these now</button>
+  <button class="btn btn-again" style="width:100%;margin-top:10px" onclick="clearMisses()">Clear the list (fresh start)</button>
+</div>
+
+<script>
+// ================= DATA: from the Chapter 1 Study App =================
+// {q, a, why, g:group(1 Core Coral / 2 Bits & Binary / 3 Concepts), c:category (distractor pool), m:exam trap}
+const CARDS = [
+// ---------- GROUP 1 · CORE CORAL (1.1–1.3) ----------
+{q:'A program’s three basic instruction types', a:'Input, Process, Output', why:'Get data, compute on it, put it somewhere. I.P.O.', g:1, c:'iotype'},
+{q:'"Gets data from a keyboard, file, or network"', a:'Input', why:'The first of the three moves.', g:1, c:'iotype'},
+{q:'"Performs a computation, like x + y"', a:'Process', why:'The middle move — working on the data.', g:1, c:'iotype'},
+{q:'"Puts data on the screen, to a file, etc."', a:'Output', why:'The last move — sending data out.', g:1, c:'iotype'},
+{q:'A named box that holds a value which can change', a:'Variable', why:'Its value "varies" — that’s where the name comes from.', g:1, c:'term'},
+{q:'A sequence of instructions that solves a problem', a:'Algorithm', why:'The step-by-step solution itself, not the language.', g:1, c:'term', m:1},
+{q:'A list of instructions that execute one at a time', a:'Program', why:'Statements run top to bottom, one at a time.', g:1, c:'term'},
+{q:'One action in a program; sits in one flowchart node', a:'Statement', why:'Each node holds exactly one statement.', g:1, c:'term'},
+{q:'The tool that runs a Coral program’s statements', a:'Interpreter', why:'"Run" and "execute" mean the same thing.', g:1, c:'term', m:1},
+{q:'A graphical language for creating/viewing programs', a:'Flowchart', why:'Coral has both a flowchart and a code version.', g:1, c:'term'},
+{q:'Flowchart shape for Start and End', a:'Oval', why:'The two ends of the program.', g:1, c:'shape'},
+{q:'Flowchart shape for input OR output', a:'Parallelogram', why:'ParalleloGRAM = Get / Give data.', g:1, c:'shape', m:1},
+{q:'Flowchart shape for a process (a calculation)', a:'Rectangle', why:'A "do a calc" step.', g:1, c:'shape'},
+{q:'The statement that reads the next input value', a:'variable = Get next input', why:'Assigns the variable with the next input value, in order.', g:1, c:'io'},
+{q:'Text inside double quotes, like "Go #57!"', a:'String literal', why:'Any letters, digits, or symbols inside quotes.', g:1, c:'io'},
+{q:'Prints a variable’s VALUE (not its name)', a:'Put x to output — no quotes', why:'No quotes = the value. Quotes = literal text.', g:1, c:'io', m:1},
+{q:'What the two-character sequence \\n does', a:'Newline — moves the cursor to the next line', why:'Invisible in the output; two in a row make a blank line.', g:1, c:'io'},
+{q:'"Text for humans, ignored when the program runs"', a:'Comment', why:'Starts with // and sits on its own line.', g:1, c:'io'},
+{q:'How many slashes start a Coral comment?', a:'Two  ( // )', why:'A single / or a backslash \\\\ are invalid comments.', g:1, c:'io', m:1},
+{q:'Spaces, tabs, and newlines between items', a:'Whitespace', why:'Mostly ignored at run time; it aids readability.', g:1, c:'io'},
+{q:'With input "22 77", the FIRST Get next input gets…', a:'22', why:'Inputs are consumed in order: 22 then 77.', g:1, c:'io'},
+{q:'Recommended spacing around an operator', a:'Exactly one space', why:'w = x + y is the most readable form.', g:1, c:'io'},
+
+// ---------- GROUP 2 · BITS & BINARY (1.6) ----------
+{q:'A single 0 or 1', a:'Bit', why:'BInary digiT = bit.', g:2, c:'binary'},
+{q:'Eight bits, like 11000101', a:'Byte', why:'8 bits = 1 byte.', g:2, c:'binary'},
+{q:'The base-2 number system computers use', a:'Binary', why:'Two states per digit: 0 or 1.', g:2, c:'binary'},
+{q:'7-bit code standard for characters (from 1963)', a:'ASCII', why:'128 characters. "A" = 65.', g:2, c:'binary', m:1},
+{q:'Encoding with 100,000+ characters (from 1991)', a:'Unicode', why:'More bits than ASCII; covers non-English + symbols.', g:2, c:'binary'},
+{q:'Binary 1100 as a decimal number', a:'12', why:'8 + 4 = 12.', g:2, c:'binary'},
+{q:'7 written as a 4-bit binary number', a:'0111', why:'4 + 2 + 1.', g:2, c:'binary'},
+{q:'The 8 binary place values (left → right)', a:'128 64 32 16 8 4 2 1', why:'Each place is a power of two.', g:2, c:'binary'},
+{q:'The range of values 8 bits can represent', a:'0 to 255', why:'All eight bits on = 255.', g:2, c:'binary'},
+{q:'ASCII code (decimal) for capital "A"', a:'65', why:'"a" is 97 — different case, different code.', g:2, c:'binary', m:1},
+{q:'Any letter, digit, or symbol', a:'Character', why:'Basically every key on a keyboard.', g:2, c:'binary'},
+
+// ---------- GROUP 3 · CONCEPTS & CONTEXT (1.4,1.5,1.7–1.10) ----------
+{q:'Switch sizes halve about every 2 years', a:'Moore’s Law', why:'Why computers shrank and got cheap so fast.', g:3, c:'history', m:1},
+{q:'Early computers used these as on(1)/off(0)', a:'Telephone switches', why:'From the early 1900s: on = 1, off = 0.', g:3, c:'history'},
+{q:'The three ages of civilization, in order', a:'Agricultural → Industrial → Information', why:'The information age began in the 1990s.', g:3, c:'history'},
+{q:'When did the information age begin?', a:'The 1990s', why:'Only a few decades ago — still transforming society.', g:3, c:'history', m:1},
+{q:'A computer inside another device (car, TV, thermostat)', a:'Embedded computer', why:'NOT a computer inside a desktop/laptop.', g:3, c:'compute', m:1},
+{q:'Special chips built for embedded computers', a:'Microcontrollers', why:'Embedded systems run on these.', g:3, c:'compute'},
+{q:'The most popular computer type today', a:'Smartphones', why:'Desktop sales keep falling each year.', g:3, c:'compute'},
+{q:'Programming is largely about…', a:'Problem solving', why:'Design the solution first, then write the code.', g:3, c:'problem'},
+{q:'Sort 1000 tags into 26 letter stacks, then sort each', a:'Radix sort', why:'Divide-and-conquer bucketing — many small easy jobs.', g:3, c:'problem'},
+{q:'Breaking a task into its most basic steps', a:'Decomposition', why:'"Draw a square" → 8 tiny turtle steps.', g:3, c:'problem'},
+{q:'The #1 best job of 2022 (a cybersecurity role)', a:'Information security analyst', why:'Software developer ranked #5.', g:3, c:'career'},
+{q:'What the "best jobs" ranking is based on', a:'Multiple factors', why:'Salary + growth + work-life balance, not a single factor.', g:3, c:'career', m:1},
+{q:'= versus ==', a:'Assign vs compare', why:'Different meanings — mixing them up is a classic bug.', g:3, c:'precision', m:1},
+{q:'Graded program output must match the expected output…', a:'Exactly, including whitespace', why:'Correct formatting IS part of correctness.', g:3, c:'precision'},
+{q:'Informal text description of a program, for humans', a:'Pseudocode', why:'"Pseudo" = similar to. It is not executed by a machine.', g:3, c:'pseudo', m:1},
+{q:'The two versions Coral comes in', a:'Flowchart and code', why:'Coral code looks like pseudocode but follows rules so it runs.', g:3, c:'pseudo'},
+{q:'Real text languages stricter than pseudocode', a:'C, C++, Java, Python', why:'Coral bridges pseudocode and real code.', g:3, c:'pseudo'},
+
+// ---------- ADDED · full test coverage pulled from the study app (quiz + labs) ----------
+{q:'To get a triangle’s area from base × height, you then multiply by…', a:'One half  (× 1/2)', why:'Triangle area = base × height ÷ 2.', g:3, c:'problem'},
+{q:'Pen down, Forward 50, Left 90 — repeated four times — draws a…', a:'Square', why:'Four equal sides with 90° turns between them.', g:3, c:'problem'},
+{q:'Creating a precise sequence of steps to solve a task', a:'Computational thinking', why:'Breaking a task into exact steps — a skill that matters far beyond coding.', g:3, c:'problem'},
+{q:'Pull socks one at a time and keep them; 3 types in the drawer. Which sock guarantees a pair?', a:'The 4th sock', why:'With only 3 types, the 4th must repeat one you already hold (the pigeonhole idea).', g:3, c:'problem'},
+{q:'Where does a program’s execution begin?', a:'The Start node', why:'A Coral flowchart begins at Start and flows downward.', g:1, c:'shape'},
+{q:'What marks where the next output character will go?', a:'The cursor', why:'It auto-moves to the end of whatever was just printed.', g:1, c:'io'},
+{q:'Put How are you? to output — with NO quotes — produces…', a:'An error', why:'Output must be a string literal in quotes, or a variable. Bare text is an error.', g:1, c:'io', m:1},
+{q:'Is “num Cars = 2 5” valid?', a:'No — you can’t put a space inside a name or a number', why:'“num Cars” and “2 5” aren’t valid items.', g:1, c:'io', m:1},
+{q:'Is “// Determine total //” a valid comment?', a:'Valid', why:'Everything after the first // is the comment; extra slashes are just text.', g:1, c:'io'},
+{q:'A program’s output is missing a newline at the end of a line — the effect?', a:'The next text runs onto the same line', why:'No newline = the following text appears on the same line.', g:1, c:'io'},
+{q:'wage=20 · salary=wage*40*52 · Put "Salary is" · Put salary — how many statements?', a:'Four', why:'One statement per line — four lines, four statements.', g:1, c:'term'},
+{q:'How many bits are in 101100?', a:'6', why:'Count the digits: 1-0-1-1-0-0 = six bits.', g:2, c:'binary'},
+{q:'Survey choices are “Under 5” and “6 or more.” What’s the flaw?', a:'Exactly 5 fits neither choice', why:'Imprecise categories miss a case — computational thinking catches the gap.', g:3, c:'precision', m:1},
+{q:'Do software developers spend nearly all their time alone?', a:'No — they often work in teams', why:'Development blends teamwork, creativity, and technical skill.', g:3, c:'career'},
+];
+
+// ================= TRACE items: predict the Coral output =================
+// {code, a:correct output, opts:[wrong...], why}
+const TRACE = [
+ {code:'integer x\nx = 5\nx = x + 3\nPut x to output', a:'8', opts:['53','5','x'], why:'x starts at 5, then 5 + 3 = 8.'},
+ {code:'Put "Hi" to output\nPut "There" to output', a:'HiThere', opts:['Hi There','Hi\nThere','There'], why:'No space or newline between them, so they run together.'},
+ {code:'Put "Hi " to output\nPut "There" to output', a:'Hi There', opts:['HiThere','Hi\nThere','Hi  There'], why:'The trailing space inside "Hi " separates the words.'},
+ {code:'Put "a\\nb\\nc" to output', a:'a\nb\nc', opts:['abc','anbnc','a\\nb\\nc'], why:'Each \\n is a newline, so a, b, c land on three lines.'},
+ {code:'integer m\nm = 5\nm = m * m\nPut m to output', a:'25', opts:['10','55','5'], why:'5 * 5 = 25.'},
+ {code:'integer x\nx = 7\nPut "x" to output', a:'x', opts:['7','"x"','Error'], why:'Quotes = literal text, so it prints the letter x, not the value.'},
+ {code:'integer x\nx = 7\nPut x to output', a:'7', opts:['x','0','integer'], why:'No quotes = the variable’s value, which is 7.'},
+ {code:'integer a\na = 7\na = a / 2\nPut a to output', a:'3', opts:['3.5','4','2'], why:'Coral integers truncate: 7 / 2 = 3 (the .5 is dropped).'},
+ {code:'// set the total\ninteger t\nt = 4 + 6\nPut t to output', a:'10', opts:['46','// set the total','Error'], why:'The // comment is ignored; 4 + 6 = 10.'},
+ {code:'integer x\nx = (2 + 3) * 4\nPut x to output', a:'20', opts:['14','24','5'], why:'Parentheses first: (5) * 4 = 20.'},
+ {code:'integer wage\ninteger salary\nwage = 20\nsalary = wage * 40 * 52\nPut salary to output', a:'41600', opts:['20','4160','1040'], why:'20 * 40 * 52 = 41600.'},
+ {code:'integer x\ninteger y\nx = Get next input\ny = Get next input\nPut y to output\n// input is: 3 8', a:'8', opts:['3','38','11'], why:'The second Get next input reads 8 into y.'},
+ {code:'integer x\ninteger y\ninteger z\nx = 10\ny = 20\nz = x + y\nPut z to output', a:'30', opts:['1020','10','x + y'], why:'The process step computes 10 + 20 = 30.'},
+ {code:'Put "Hello World!" to output', a:'Hello World!', opts:['HelloWorld!','Hello World','"Hello World!"'], why:'Prints the string literal exactly — the space and “!” included (graded Lab 1.12).'},
+ {code:'Put "  NO PARKING\\n" to output\nPut "1:00 - 5:00 a.m." to output', a:'  NO PARKING\n1:00 - 5:00 a.m.', opts:['NO PARKING\n1:00 - 5:00 a.m.','  NO PARKING 1:00 - 5:00 a.m.','NO PARKING1:00 - 5:00 a.m.'], why:'Two leading spaces, then \\n drops to line 2 (graded Lab 1.13).'},
+];
+
+// ================= STATE =================
+let deck = 'all';
+let flipQueue = [], flipDoneCt = 0, flipTotal = 0, flipAgain = 0;
+let matchPool = [], matchIdx = 0, mScore = 0, streak = 0, best = 0;
+let tracePool = [], traceIdx = 0, tScore = 0;
+
+// ================= PERSISTENT PROGRESS =================
+// progress = { misses:{ key:{a, n} }, best, session:{queue,done,total,deck} }
+let progress = { misses:{}, best:0, session:null };
+let storageOK = (typeof window!=='undefined' && window.storage && typeof window.storage.get==='function');
+let localOK = false;
+if(!storageOK){ try{ localStorage.setItem('d278-t','1'); localStorage.removeItem('d278-t'); localOK=true; }catch(e){} }
+
+async function loadProgress(){
+  try{
+    let raw = null;
+    if(storageOK){ const r = await window.storage.get('d278-progress'); raw = r && r.value; }
+    else if(localOK){ raw = localStorage.getItem('d278-progress'); }
+    if(raw){ const p = JSON.parse(raw);
+      progress.misses = p.misses||{}; progress.best = p.best||0; progress.session = p.session||null; }
+  }catch(e){ /* first run: nothing saved yet */ }
+  afterLoad();
+}
+let saveTimer=null;
+function saveProgress(){
+  if(!storageOK && !localOK) return;
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(async ()=>{
+    try{
+      const raw = JSON.stringify(progress);
+      if(storageOK) await window.storage.set('d278-progress', raw);
+      else localStorage.setItem('d278-progress', raw);
+    }catch(e){ console.error('save failed', e); }
+  }, 250);
+}
+function recordMiss(key, answer){
+  const m = progress.misses[key] || {a:answer, n:0};
+  m.n++; m.a = answer; progress.misses[key]=m;
+  saveProgress(); refreshHomeBadges();
+}
+function recordGot(key){
+  const m = progress.misses[key];
+  if(m){ m.n--; if(m.n<=0) delete progress.misses[key]; saveProgress(); refreshHomeBadges(); }
+}
+function missCount(){ return Object.keys(progress.misses).length; }
+function afterLoad(){
+  best = progress.best||0;
+  const note = document.getElementById('saveNote');
+  if(note) note.textContent = (storageOK||localOK)
+    ? 'Progress saves automatically on this device — close the app and pick up where you left off.'
+    : 'Heads up: saving isn’t available here, so progress lasts this session only.';
+  refreshHomeBadges();
+}
+function refreshHomeBadges(){
+  const n = missCount();
+  const weakBtn = document.getElementById('weakDeckBtn');
+  if(weakBtn){ weakBtn.textContent = '📋 Most Missed ('+n+')'; weakBtn.style.display = n? 'block':'none';
+    if(!n && deck==='weak'){ deck='all'; document.querySelectorAll('.deck-btn').forEach(b=>b.classList.remove('active')); document.querySelector('.deck-btn.d0').classList.add('active'); } }
+  const revCard = document.getElementById('reviewCard');
+  if(revCard){ revCard.style.display = n? 'block':'none';
+    const s=document.getElementById('reviewSub'); if(s) s.textContent = n+' item'+(n===1?'':'s')+' you’ve missed while playing — see them, then drill them until the list is empty.'; }
+  const res = document.getElementById('resumeCard');
+  if(res){ const ses = progress.session;
+    if(ses && ses.queue && ses.queue.length){ res.style.display='block';
+      document.getElementById('resumeSub').textContent = ses.queue.length+' cards left in your '+deckName(ses.deck)+' flip deck. Jump back in.';
+    } else res.style.display='none'; }
+}
+function deckName(d){ return d==='all'?'Everything':d==='trap'?'Exam Traps':d==='weak'?'Most Missed':d==='1'?'Core Coral':d==='2'?'Bits & Binary':'Concepts'; }
+
+function pool(){
+  if(deck==='all') return [...CARDS];
+  if(deck==='trap') return CARDS.filter(c=>c.m);
+  if(deck==='weak') return CARDS.filter(c=>progress.misses[c.q]);
+  return CARDS.filter(c=>c.g===+deck);
+}
+function shuffle(a){ for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];} return a; }
+function setDeck(d, el){
+  deck=d;
+  document.querySelectorAll('.deck-btn').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+}
+function show(id){ ['home','flip','match','trace','review'].forEach(x=>document.getElementById(x).classList.add('hidden')); document.getElementById(id).classList.remove('hidden'); window.scrollTo(0,0); }
+function goHome(){ refreshHomeBadges(); show('home'); }
+function tagFor(c){
+  const g=c.g; return g===1?['t1','Core Coral']:g===2?['t2','Bits & Binary']:['t3','Concepts'];
+}
+
+// ================= FLIP =================
+function startFlip(){
+  flipQueue = shuffle(pool()); flipDoneCt=0; flipAgain=0; flipTotal=flipQueue.length;
+  if(!flipTotal){ alert('No cards in this deck.'); return; }
+  beginFlip();
+}
+function resumeFlip(){
+  const ses = progress.session;
+  if(!ses || !ses.queue || !ses.queue.length){ startFlip(); return; }
+  deck = ses.deck || 'all';
+  const byQ = {}; CARDS.forEach(c=>byQ[c.q]=c);
+  flipQueue = ses.queue.map(s=>{ const c = Object.assign({}, byQ[s.q]); if(s.again) c._again=true; return c; }).filter(c=>c.q);
+  flipDoneCt = ses.done||0; flipTotal = ses.total||flipQueue.length+flipDoneCt;
+  flipAgain = flipQueue.filter(x=>x._again).length;
+  if(!flipQueue.length){ startFlip(); return; }
+  beginFlip();
+}
+function beginFlip(){
+  document.getElementById('flipDone').classList.add('hidden');
+  document.querySelector('#flip .scene').classList.remove('hidden');
+  document.querySelector('#flip .grade').style.display='flex';
+  saveFlipSession();
+  show('flip'); renderFlip();
+}
+function saveFlipSession(){
+  progress.session = { deck, done:flipDoneCt, total:flipTotal,
+    queue: flipQueue.map(c=>({q:c.q, again:!!c._again})) };
+  saveProgress();
+}
+function renderFlip(){
+  const c = flipQueue[0];
+  const [cls,txt] = c.m ? ['tm','🔴 '+tagFor(c)[1]+' · trap'] : tagFor(c);
+  const tag = document.getElementById('flipTag'); tag.className='tag '+cls; tag.textContent=txt;
+  document.getElementById('scene').classList.remove('flipped');
+  setTimeout(()=>{
+    document.getElementById('flipQ').textContent=c.q;
+    document.getElementById('flipA').textContent=c.a;
+    document.getElementById('flipW').textContent=c.why;
+  }, 60);
+  document.getElementById('flipProg').textContent = `${flipDoneCt} done · ${flipQueue.length} left` + (flipAgain?` · ${flipAgain} coming back`:'');
+  document.getElementById('flipBar').style.width = (flipTotal? (flipDoneCt/flipTotal*100):0)+'%';
+}
+function grade(got){
+  const c = flipQueue.shift();
+  if(got){ flipDoneCt++; if(c._again) flipAgain=Math.max(0,flipAgain-1); recordGot(c.q); }
+  else { recordMiss(c.q, c.a); c._again=true; flipQueue.splice(Math.min(5,flipQueue.length),0,c); flipAgain = flipQueue.filter(x=>x._again).length; }
+  saveFlipSession();
+  if(!flipQueue.length){ finishFlip(); return; }
+  renderFlip();
+}
+function finishFlip(){
+  progress.session = null; saveProgress(); refreshHomeBadges();
+  document.querySelector('#flip .scene').classList.add('hidden');
+  document.querySelector('#flip .grade').style.display='none';
+  document.getElementById('flipDone').classList.remove('hidden');
+  document.getElementById('flipDoneTxt').textContent = `Deck complete — ${flipTotal} cards owned. Every "Again" card came back until you got it. That’s the whole trick.`;
+  document.getElementById('flipProg').textContent=''; document.getElementById('flipBar').style.width='100%';
+}
+
+// ================= SPEED MATCH =================
+function startMatch(){
+  matchPool = shuffle(pool()); matchIdx=0; mScore=0; streak=0;
+  if(!matchPool.length){ alert('No cards in this deck.'); return; }
+  document.getElementById('mScore').textContent=0; document.getElementById('streak').textContent=0;
+  show('match'); renderMatch();
+}
+function distractors(card){
+  let same = CARDS.filter(c=>c.c===card.c && c.a!==card.a);
+  let others = CARDS.filter(c=>c.c!==card.c && c.a!==card.a);
+  const seen = new Set([card.a]); const out=[];
+  for(const src of [shuffle(same), shuffle(others)]){
+    for(const c of src){ if(out.length>=3) break; if(!seen.has(c.a)){ seen.add(c.a); out.push(c.a);} }
+  }
+  return out;
+}
+function renderMatch(){
+  const c = matchPool[matchIdx];
+  const [cls,txt] = c.m ? ['tm','🔴 trap'] : tagFor(c);
+  const tag=document.getElementById('matchTag'); tag.className='tag '+cls; tag.textContent=txt;
+  document.getElementById('matchQ').textContent=c.q;
+  document.getElementById('matchProg').textContent = `${matchIdx+1} of ${matchPool.length}`;
+  const opts = shuffle([c.a, ...distractors(c)]);
+  const wrap = document.getElementById('matchOpts'); wrap.innerHTML='';
+  opts.forEach(o=>{
+    const b=document.createElement('button'); b.className='opt'; b.textContent=o;
+    b.onclick=()=>pickMatch(b,o===c.a,c); wrap.appendChild(b);
+  });
+  const fb=document.getElementById('matchFb'); fb.className='feedback'; fb.textContent='';
+  document.getElementById('matchNext').classList.remove('show');
+}
+function pickMatch(btn, right, c){
+  document.querySelectorAll('#matchOpts .opt').forEach(b=>{ b.disabled=true; if(b.textContent===c.a) b.classList.add('right'); });
+  const fb=document.getElementById('matchFb');
+  if(right){ btn.classList.add('right'); mScore++; streak++;
+    if(streak>best){ best=streak; progress.best=best; saveProgress(); }
+    recordGot(c.q);
+    fb.className='feedback show fb-ok'; fb.textContent='✓ '+c.why;
+  } else { btn.classList.add('wrong'); streak=0; recordMiss(c.q, c.a);
+    fb.className='feedback show fb-bad'; fb.textContent='✗ It’s "'+c.a+'." '+c.why;
+  }
+  document.getElementById('mScore').textContent=mScore;
+  document.getElementById('streak').textContent=streak;
+  document.getElementById('best').textContent=best;
+  document.getElementById('matchNext').classList.add('show');
+}
+function nextMatch(){
+  matchIdx++;
+  if(matchIdx>=matchPool.length){
+    const pct = Math.round(mScore/matchPool.length*100);
+    document.getElementById('matchQ').textContent = `Round done: ${mScore}/${matchPool.length} (${pct}%). Best streak: ${best}.` + (pct>=80?' Ready.':' Run the traps deck next.');
+    document.getElementById('matchOpts').innerHTML='';
+    const fb=document.getElementById('matchFb'); fb.className='feedback show '+(pct>=80?'fb-ok':'fb-bad');
+    fb.textContent = pct>=80 ? 'That’s a passing pace. Keep the streaks coming.' : 'Every wrong one just taught you something the exam can’t surprise you with anymore.';
+    const nb=document.getElementById('matchNext'); nb.textContent='Play again'; nb.onclick=()=>{ nb.textContent='Next →'; nb.onclick=nextMatch; startMatch(); };
+    return;
+  }
+  renderMatch();
+}
+
+// ================= TRACE THE OUTPUT =================
+function startTrace(){
+  tracePool = shuffle([...TRACE]); traceIdx=0; tScore=0;
+  document.getElementById('tScore').textContent=0;
+  document.getElementById('tTotal').textContent=0;
+  show('trace'); renderTrace();
+}
+function renderTrace(){
+  const it = tracePool[traceIdx];
+  document.getElementById('traceQ').textContent = it.code;
+  document.getElementById('traceProg').textContent = `${traceIdx+1} of ${tracePool.length}`;
+  const opts = shuffle([it.a, ...it.opts]);
+  const wrap=document.getElementById('traceOpts'); wrap.innerHTML='';
+  opts.forEach(o=>{
+    const b=document.createElement('button'); b.className='opt mono'; b.textContent=o;
+    b.onclick=()=>pickTrace(b, o===it.a, it); wrap.appendChild(b);
+  });
+  const fb=document.getElementById('traceFb'); fb.className='feedback'; fb.textContent='';
+  document.getElementById('traceNext').classList.remove('show');
+}
+function pickTrace(btn, right, it){
+  document.querySelectorAll('#traceOpts .opt').forEach(b=>{ b.disabled=true; if(b.textContent===it.a) b.classList.add('right'); });
+  const fb=document.getElementById('traceFb');
+  if(right){ btn.classList.add('right'); tScore++; fb.className='feedback show fb-ok'; fb.textContent='✓ '+it.why; recordGot(it.code); }
+  else { btn.classList.add('wrong'); fb.className='feedback show fb-bad'; fb.textContent='✗ Output is: '+it.a.replace(/\n/g,' ⏎ ')+'. '+it.why; recordMiss(it.code, it.a); }
+  document.getElementById('tScore').textContent=tScore;
+  document.getElementById('tTotal').textContent=traceIdx+1;
+  document.getElementById('traceNext').classList.add('show');
+}
+function nextTrace(){
+  traceIdx++;
+  if(traceIdx>=tracePool.length){
+    const pct=Math.round(tScore/tracePool.length*100);
+    document.getElementById('traceQ').textContent=`Traced: ${tScore}/${tracePool.length} (${pct}%).` + (pct>=80?' You can read Coral output cold.':' One more round and you will.');
+    document.getElementById('traceOpts').innerHTML='';
+    const fb=document.getElementById('traceFb'); fb.className='feedback'; fb.textContent='';
+    const nb=document.getElementById('traceNext'); nb.textContent='Trace again'; nb.classList.add('show');
+    nb.onclick=()=>{ nb.textContent='Next →'; nb.onclick=nextTrace; startTrace(); };
+    return;
+  }
+  renderTrace();
+}
+
+// ================= REVIEW MY MISSES =================
+function showReview(){
+  const entries = Object.entries(progress.misses).sort((a,b)=>b[1].n-a[1].n);
+  document.getElementById('revCount').textContent = entries.length+' to review';
+  const wrap = document.getElementById('revList'); wrap.innerHTML='';
+  entries.forEach(([q,m])=>{
+    const row = document.createElement('div');
+    row.style.cssText='background:#fff;border:1px solid var(--line);border-radius:12px;padding:13px 14px;margin-bottom:9px';
+    row.innerHTML = '<div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start">'
+      +'<div style="font-size:13.5px;line-height:1.4;white-space:pre-wrap">'+q+'</div>'
+      +'<span style="flex-shrink:0;font-family:Sora,sans-serif;font-size:10px;font-weight:700;background:var(--misss);color:var(--miss);padding:3px 9px;border-radius:12px">×'+m.n+'</span></div>'
+      +'<div style="font-family:Sora,sans-serif;font-size:13px;font-weight:700;color:var(--u3);margin-top:6px">→ '+m.a+'</div>';
+    wrap.appendChild(row);
+  });
+  show('review');
+}
+function drillWeak(){
+  const drillable = CARDS.filter(c=>progress.misses[c.q]);
+  if(!drillable.length){ alert('Your missed items are all Trace-the-Output snippets — play Trace the Output again to clear them.'); return; }
+  deck='weak';
+  document.querySelectorAll('.deck-btn').forEach(b=>b.classList.remove('active'));
+  const wb=document.getElementById('weakDeckBtn'); if(wb) wb.classList.add('active');
+  startFlip();
+}
+async function clearMisses(){
+  progress.misses = {}; saveProgress(); refreshHomeBadges(); goHome();
+}
+
+loadProgress();
+</script>
+</body>
+</html>
