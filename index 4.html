@@ -1,0 +1,951 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light">
+<title>D278 Drill</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700&family=Karla:wght@400;500;700&family=IBM+Plex+Mono:wght@400;600&display=swap">
+
+<style>
+:root{
+  --paper:#F3F5F1;
+  --card:#FFFFFF;
+  --ink:#26302B;
+  --ink-2:#5A6A60;
+  --ink-3:#8B9A90;
+  --line:#D9DFD6;
+  --teal:#4E8D6E;
+  --teal-dk:#3A6B53;
+  --teal-soft:#E5EFE8;
+  --red:#B04747;
+  --red-soft:#FAEBEB;
+  --gold:#8A6A14;
+  --gold-soft:#F5EEDB;
+  --code:#EBEFE8;
+  --f-d:"Sora",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  --f-b:"Karla",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  --f-m:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{
+  margin:0;background:var(--paper);color:var(--ink);
+  font-family:var(--f-b);font-size:16.5px;line-height:1.55;
+  -webkit-text-size-adjust:100%;
+}
+.app{max-width:620px;margin:0 auto;padding:0 16px 56px;min-height:100vh}
+
+/* ---------- masthead ---------- */
+.mast{padding:26px 0 16px;display:flex;align-items:flex-start;justify-content:space-between;gap:14px}
+.mast h1{
+  font-family:var(--f-d);font-weight:700;font-size:23px;letter-spacing:-.01em;
+  margin:0;line-height:1.1;
+}
+.mast p{margin:5px 0 0;font-family:var(--f-m);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3)}
+.streakbox{text-align:right;flex:0 0 auto}
+.streakbox b{font-family:var(--f-d);font-size:25px;font-weight:700;display:block;line-height:1;font-variant-numeric:tabular-nums}
+.streakbox span{font-family:var(--f-m);font-size:9.5px;letter-spacing:.13em;text-transform:uppercase;color:var(--ink-3);display:block;margin-top:5px}
+.streakbox.hot b{color:var(--teal)}
+
+/* ---------- picker ---------- */
+.panel{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:16px;margin-bottom:14px}
+.lab{font-family:var(--f-m);font-size:10px;letter-spacing:.15em;text-transform:uppercase;color:var(--ink-3);margin:0 0 10px;display:block}
+.modes{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.modes button{
+  font-family:var(--f-d);font-weight:600;font-size:14.5px;text-align:left;
+  background:var(--paper);color:var(--ink);border:1px solid var(--line);
+  border-radius:7px;padding:13px 14px;cursor:pointer;line-height:1.25;
+}
+.modes button em{display:block;font-family:var(--f-b);font-style:normal;font-weight:400;font-size:12px;color:var(--ink-3);margin-top:4px}
+.modes button:hover{border-color:var(--teal)}
+.modes button[aria-pressed="true"]{background:var(--teal);border-color:var(--teal);color:#fff}
+.modes button[aria-pressed="true"] em{color:rgba(255,255,255,.82)}
+
+.decks{display:flex;flex-wrap:wrap;gap:7px}
+.decks button{
+  font-family:var(--f-m);font-size:12px;letter-spacing:.02em;
+  background:var(--paper);color:var(--ink-2);border:1px solid var(--line);
+  border-radius:20px;padding:7px 13px;cursor:pointer;
+}
+.decks button:hover{border-color:var(--teal);color:var(--teal-dk)}
+.decks button[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:var(--paper)}
+.decks button.miss[aria-pressed="true"]{background:var(--red);border-color:var(--red)}
+.decks button .ct{opacity:.55;margin-left:5px}
+.decks button:disabled{opacity:.4;cursor:not-allowed}
+
+button:focus-visible{outline:2px solid var(--teal);outline-offset:2px}
+
+.bar{display:flex;align-items:center;gap:11px;margin:0 0 14px}
+.prog{flex:1;height:5px;background:var(--line);border-radius:99px;overflow:hidden}
+.prog i{display:block;height:100%;background:var(--teal);width:0;transition:width .22s ease}
+.count{font-family:var(--f-m);font-size:11px;color:var(--ink-3);font-variant-numeric:tabular-nums;white-space:nowrap}
+
+/* ---------- stage ---------- */
+.stage{min-height:300px}
+.tag{
+  display:inline-block;font-family:var(--f-m);font-size:9.5px;letter-spacing:.13em;
+  text-transform:uppercase;padding:4px 9px;border-radius:4px;margin-bottom:12px;
+  background:var(--teal-soft);color:var(--teal-dk);
+}
+.tag.miss{background:var(--red-soft);color:var(--red)}
+
+/* flip card */
+.flip{
+  background:var(--card);border:1px solid var(--line);border-radius:10px;
+  padding:30px 24px;min-height:230px;display:flex;flex-direction:column;
+  justify-content:center;cursor:pointer;box-shadow:0 1px 0 rgba(38,48,43,.04);
+}
+.flip .front{font-family:var(--f-d);font-weight:700;font-size:25px;line-height:1.24;text-wrap:balance}
+.flip .back{margin-top:16px;padding-top:16px;border-top:1px solid var(--line);color:var(--ink-2);font-size:17px}
+.flip .hint{margin-top:16px;font-family:var(--f-m);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3)}
+.acts{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:12px}
+.acts button{
+  font-family:var(--f-d);font-weight:600;font-size:15px;padding:15px;border-radius:8px;
+  border:1px solid var(--line);cursor:pointer;background:var(--card);color:var(--ink);
+}
+.acts .again{border-color:var(--red);color:var(--red)}
+.acts .again:hover{background:var(--red);color:#fff}
+.acts .got{border-color:var(--teal);color:var(--teal-dk)}
+.acts .got:hover{background:var(--teal);color:#fff}
+
+/* prompt + options */
+.prompt{
+  background:var(--card);border:1px solid var(--line);border-radius:10px;
+  padding:22px;font-size:18.5px;line-height:1.42;margin-bottom:11px;
+}
+.prompt .ask{font-family:var(--f-m);font-size:10.5px;letter-spacing:.13em;text-transform:uppercase;color:var(--ink-3);display:block;margin-bottom:11px}
+pre{
+  font-family:var(--f-m);font-size:13.5px;line-height:1.6;background:var(--code);
+  border:1px solid var(--line);border-radius:7px;padding:14px;margin:0 0 13px;
+  overflow-x:auto;white-space:pre;
+}
+.opts{display:grid;gap:8px}
+.opts button{
+  font-family:var(--f-b);font-size:16px;text-align:left;line-height:1.4;
+  background:var(--card);border:1px solid var(--line);border-radius:8px;
+  padding:14px 16px;cursor:pointer;color:var(--ink);
+}
+.opts button:hover:not(:disabled){border-color:var(--teal)}
+.opts button:disabled{cursor:default}
+.opts button.right{background:var(--teal);border-color:var(--teal);color:#fff;font-weight:700}
+.opts button.wrong{background:var(--red);border-color:var(--red);color:#fff;font-weight:700}
+.opts button.dim{opacity:.42}
+
+/* sort buckets */
+.buckets{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.buckets button{
+  font-family:var(--f-d);font-weight:600;font-size:15px;padding:18px 12px;
+  background:var(--card);border:1px solid var(--line);border-radius:8px;cursor:pointer;color:var(--ink);
+}
+.buckets button:hover:not(:disabled){border-color:var(--teal)}
+.buckets button.right{background:var(--teal);border-color:var(--teal);color:#fff}
+.buckets button.wrong{background:var(--red);border-color:var(--red);color:#fff}
+.buckets button:disabled{cursor:default}
+
+.why{
+  margin-top:11px;padding:14px 16px;border-radius:8px;font-size:15.5px;line-height:1.5;
+  background:var(--gold-soft);border:1px solid #DECDA6;border-left:4px solid var(--gold);
+}
+.why b{color:var(--gold)}
+.next{
+  width:100%;margin-top:10px;font-family:var(--f-d);font-weight:600;font-size:15px;
+  padding:15px;border-radius:8px;border:1px solid var(--ink);background:var(--ink);color:var(--paper);cursor:pointer;
+}
+
+/* done */
+.done{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:34px 24px;text-align:center}
+.done h2{font-family:var(--f-d);font-size:24px;margin:0 0 8px}
+.done p{color:var(--ink-2);margin:0 0 20px}
+.done .score{font-family:var(--f-d);font-size:44px;font-weight:700;line-height:1;margin-bottom:8px;font-variant-numeric:tabular-nums}
+.done button{font-family:var(--f-d);font-weight:600;font-size:15px;padding:14px 22px;border-radius:8px;border:1px solid var(--teal);background:var(--teal);color:#fff;cursor:pointer}
+.done .misslist{text-align:left;margin-top:22px;padding-top:18px;border-top:1px solid var(--line)}
+.done .misslist li{margin-bottom:8px;color:var(--ink-2);font-size:15px}
+.done .misslist b{color:var(--ink)}
+
+.gapnote{
+  margin-top:30px;padding:16px 18px;border-radius:8px;
+  background:var(--card);border:1px dashed var(--line);
+}
+.gapnote .lab{color:var(--ink-3)}
+.gapnote p{margin:0 0 9px;font-size:14.5px;color:var(--ink-2);line-height:1.5}
+.gapnote ul{margin:0;padding-left:18px}
+.gapnote li{font-size:14.5px;color:var(--ink-2);margin-bottom:4px}
+.gapnote b{color:var(--ink)}
+
+.foot{margin-top:20px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.foot button{
+  font-family:var(--f-m);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;
+  background:none;border:1px solid var(--line);border-radius:5px;padding:7px 11px;
+  color:var(--ink-3);cursor:pointer;
+}
+.foot button:hover{border-color:var(--red);color:var(--red)}
+.foot .save{font-family:var(--f-m);font-size:10.5px;color:var(--ink-3)}
+
+@media (max-width:400px){
+  .modes{grid-template-columns:1fr}
+  .flip .front{font-size:22px}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="mast">
+    <div>
+      <h1>D278 Drill</h1>
+      <p id="subtitle">All 3 competencies &middot; 122 cards</p>
+    </div>
+    <div class="streakbox" id="streakBox">
+      <b id="streakNum">0</b><span>Streak</span>
+    </div>
+  </div>
+
+  <div class="panel">
+    <span class="lab">Mode</span>
+    <div class="modes" id="modeRow">
+      <button data-mode="flip" aria-pressed="true">Flip Cards<em>Term &rarr; answer, tap to flip</em></button>
+      <button data-mode="match" aria-pressed="false">Speed Match<em>Read the clue, pick the term</em></button>
+      <button data-mode="sort" aria-pressed="false">Sort It<em>Drop it in the right bucket</em></button>
+      <button data-mode="trace" aria-pressed="false">Trace It<em>Predict the output</em></button>
+    </div>
+  </div>
+
+  <div class="panel">
+    <span class="lab">Deck</span>
+    <div class="decks" id="deckRow"></div>
+  </div>
+
+  <div class="bar">
+    <div class="prog"><i id="progFill"></i></div>
+    <span class="count" id="countTxt">0 / 0</span>
+  </div>
+
+  <div class="stage" id="stage"></div>
+
+  <div class="gapnote">
+    <span class="lab">Not in here yet &mdash; needs zyBooks</span>
+    <p>Every card comes from your four uploaded PDFs, which cover the Study Questions except for these. Upload zyBooks <b>Ch. 2</b> and <b>Ch. 7</b> and they get added:</p>
+    <ul>
+      <li>What is a <b>binary search</b>? (Ch. 7)</li>
+      <li>What is a <b>linear search</b>? (Ch. 7)</li>
+      <li>What happens if you divide <b>two integers</b>? (Ch. 2)</li>
+      <li>Are libraries <b>compiled or precompiled</b>? (Ch. 9)</li>
+    </ul>
+  </div>
+
+  <div class="foot">
+    <span class="save" id="saveNote"></span>
+    <button id="resetBtn">Reset all progress</button>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   STORE \u2014 window.storage \u2192 localStorage \u2192 memory
+   ============================================================ */
+var Store = (function(){
+  var KEY = "d278drill.v1";
+  var mem = {}, kind = "memory";
+  function backend(){
+    try { if (window.storage && typeof window.storage.getItem === "function") return window.storage; } catch(e){}
+    try {
+      var t = "__d278t__";
+      window.localStorage.setItem(t,"1"); window.localStorage.removeItem(t);
+      return window.localStorage;
+    } catch(e){}
+    return null;
+  }
+  var be = backend();
+  if (be) kind = (be === window.localStorage) ? "localStorage" : "window.storage";
+  return {
+    kind: kind,
+    read: function(){
+      if (!be) return mem;
+      try { return JSON.parse(be.getItem(KEY) || "{}"); } catch(e){ return {}; }
+    },
+    write: function(o){
+      if (!be) { mem = o; return false; }
+      try { be.setItem(KEY, JSON.stringify(o)); return true; } catch(e){ mem = o; return false; }
+    },
+    clear: function(){
+      mem = {};
+      if (!be) return;
+      try { be.removeItem(KEY); } catch(e){}
+    }
+  };
+})();
+
+var S = Store.read();
+if (!S.missed) S.missed = {};   // id -> miss count (self-healing: deleted on a correct answer)
+if (!S.mode)   S.mode   = "flip";
+if (!S.deck)   S.deck   = "all";
+function persist(){ Store.write(S); }
+
+/* ============================================================
+   CONTENT \u2014 all from Lissa's four D278 uploads
+   p1 SDLC \u00B7 p2 language buckets \u00B7 p3 tracing/logic
+   p4 data types & operators \u00B7 p5 functions \u00B7 p6 UML & libraries
+   m:1 = maps to a question she missed on the pre-assessment
+   ============================================================ */
+var CARDS = [
+/* ---- P1 \u00B7 SDLC ---- */
+{id:"c1",p:"p1",m:1,t:"Analysis phase",d:"Big picture: user needs and the goal(s) of the system. All goals live here \u2014 including goals that change after customer feedback."},
+{id:"c2",p:"p1",m:1,t:"Design phase",d:"How to achieve the goals. Not coding yet \u2014 deciding what system components are needed and how they will interact."},
+{id:"c3",p:"p1",m:1,t:"Implementation phase",d:"The phase where the code is written and a working (if perhaps not fully complete) program is built."},
+{id:"c4",p:"p1",m:1,t:"Testing phase",d:"Is our code free from errors? Is the program complete? Did we meet the original goals?"},
+{id:"c5",p:"p1",m:1,t:"Which phase writes code?",d:"Implementation. Always \u2014 even the fourth rewrite of the program."},
+{id:"c6",p:"p1",m:1,t:"Which phase defines a program's goals?",d:"Analysis. It is the first step in the waterfall approach."},
+{id:"c7",p:"p1",m:1,t:"Customer feedback changes the goals \u2014 which phase?",d:"Analysis. Goals always live in Analysis, no matter how late the feedback arrives."},
+{id:"c8",p:"p1",m:1,t:"Defining a hypothesis to find a problem \u2014 which phase?",d:"Testing. Hunting for defects is testing, not implementing."},
+{id:"c9",p:"p1",m:1,t:"Running a program on numerous inputs to check outputs",d:"Testing. Someone other than the author verifying correct output is the classic Testing activity."},
+{id:"c10",p:"p1",m:1,t:"Waterfall approach",d:"Carrying out the SDLC phases in sequence. Works in a linear manner \u2014 no earlier phase is revisited."},
+{id:"c11",p:"p1",m:1,t:"Agile (or spiral) approach",d:"A program is built by doing small amounts of each SDLC phase in sequence, then repeating. Works in a circular manner; each phase is revisited several times."},
+{id:"c12",p:"p1",t:"SDLC",d:"Software Development Life Cycle: Analysis phase, Design phase, Implementation phase, Testing phase."},
+{id:"c13",p:"p1",t:"Incremental development",d:"Writing, compiling and testing a small amount of code, then writing, compiling and testing a small amount more, and so on."},
+{id:"c14",p:"p1",t:"Modular development",d:"Dividing a program into separate modules that can be developed and tested separately, then integrated into a single program."},
+{id:"c15",p:"p1",t:"Waterfall pros and cons",d:"Pros: simple, easy to manage, phases completed one at a time, clearly defined stages, well documented. Cons: no working software until late, high risk, can't accommodate changing requirements, integration is a big bang at the end."},
+{id:"c16",p:"p1",t:"Agile pros and cons",d:"Pros: realistic, promotes teamwork, delivers early partial working solutions, suits changing requirements, flexible. Cons: poor with complex dependencies, needs a real agile lead, depends heavily on customer interaction, thin documentation makes handoff hard."},
+
+/* ---- P2 \u00B7 language buckets ---- */
+{id:"c20",p:"p2",m:1,t:"Compiled language",d:"First converted by a compiler into machine code, which then runs on a particular machine. Ex. C, C++, Java."},
+{id:"c21",p:"p2",m:1,t:"Interpreted language",d:"Run one statement at a time by another program called an interpreter. Ex. Python, JavaScript, MATLAB."},
+{id:"c22",p:"p2",m:1,t:"Which languages are compiled?",d:"C, C++, Java, C#."},
+{id:"c23",p:"p2",m:1,t:"Which languages are interpreted?",d:"Python, JavaScript, MATLAB."},
+{id:"c24",p:"p2",m:1,t:"Statically typed language",d:"Once a variable is created to hold an integer it can only contain integers \u2014 you'd need a second variable for a string. Considered safer; the compiler reports type errors."},
+{id:"c25",p:"p2",m:1,t:"Dynamically typed language",d:"The same variable can simply be reassigned a new value of a different type. Considered easier to use and requires fewer variables."},
+{id:"c26",p:"p2",m:1,t:"Which languages are statically typed?",d:"C, C++, Java."},
+{id:"c27",p:"p2",m:1,t:"Which language is dynamically typed?",d:"Python \u2014 the only one in your materials."},
+{id:"c28",p:"p2",m:1,t:"Which languages are object oriented?",d:"C++, Java, Python, C#. MATLAB and JavaScript provide some object-oriented support."},
+{id:"c29",p:"p2",m:1,t:"Which language is NOT object oriented?",d:"C \u2014 the only one in your materials."},
+{id:"c30",p:"p2",m:1,t:"Object-oriented language",d:"Substantially supports decomposing a program into objects \u2014 code organized like the physical world, where a person object has attributes and can perform actions."},
+{id:"c31",p:"p2",m:1,t:"Markup language",d:"Tags surround text to describe desired formatting. It describes how content should look; it does not compute anything."},
+{id:"c32",p:"p2",m:1,t:"Advantage of interpreted programs",d:"They can be modified at run time, and they run easily on different kinds of machines \u2014 any machine having the right interpreter."},
+{id:"c33",p:"p2",m:1,t:"Characteristic of a compiled language",d:"Converts to machine language before running."},
+{id:"c34",p:"p2",m:1,t:"\"A compiler should report an error if an integer variable is assigned a string\"",d:"Statically typed. This is a typing question, not an object-oriented question."},
+{id:"c35",p:"p2",m:1,t:"\"Supports creating person, teacher and student items, each with internal data and operations\"",d:"Object-oriented. This is an object question, not a typing question."},
+{id:"c36",p:"p2",t:"Compiling, in plain terms",d:"Like translating a whole letter into French, then sending it. All the translation is done at once, before the program reaches its recipient."},
+{id:"c37",p:"p2",t:"Interpreting, in plain terms",d:"Like a live conversation through an in-person translator \u2014 a thought or two at a time, on the fly."},
+{id:"c38",p:"p2",t:"Interpreter",d:"Used to run a program's statements."},
+
+/* ---- P3 \u00B7 logic, loops, tracing ---- */
+{id:"c40",p:"p3",m:1,t:"The three parts of a loop",d:"Loop variable initialization, loop expression, loop variable update."},
+{id:"c41",p:"p3",m:1,t:"Loop variable initialization",d:"The part that SETS the loop variable's starting value. In 'y = 0 / while y < 10 / y = y + 1' it is y = 0."},
+{id:"c42",p:"p3",m:1,t:"Loop expression",d:"The part that CHECKS the condition each pass. In 'i = 0 / while i < 20 / i = i + 1' it is i < 20."},
+{id:"c43",p:"p3",m:1,t:"Loop variable update",d:"The part that CHANGES the loop variable. In 'y = 0 / while y < 10 / y = y + 1' it is y = y + 1."},
+{id:"c44",p:"p3",m:1,t:"How is an infinite loop created?",d:"The loop expression never becomes false \u2014 usually because the loop variable update is missing or moves the wrong way."},
+{id:"c45",p:"p3",m:1,t:"while loop",d:"Repeatedly executes the loop body while the loop's expression evaluates to true. Checks FIRST, so it may run zero times."},
+{id:"c46",p:"p3",m:1,t:"do-while loop",d:"First executes the loop body's statements, THEN checks the loop condition. Always runs at least once."},
+{id:"c47",p:"p3",m:1,t:"Which loop when you're unsure how many iterations?",d:"A while loop \u2014 or a do-while when the body must run once before there is anything to check."},
+{id:"c48",p:"p3",t:"Which loop when you know how many iterations?",d:"A for loop \u2014 a loop consisting of a loop variable initialization, a loop expression and a loop variable update."},
+{id:"c49",p:"p3",t:"Branch",d:"A sequence of statements only executed under a certain condition. Runs at most once."},
+{id:"c50",p:"p3",t:"if-else",d:"A decision and its two branches. If the decision's expression is true the first branch executes, ELSE the second branch executes."},
+{id:"c51",p:"p3",t:"Which structure runs AT MOST one time?",d:"A branch (if / if-else): zero times if its condition is false, once if true. Contrast: a do-while is guaranteed to run AT LEAST once. Know both facts; the study question's wording is ambiguous, so confirm with your instructor."},
+{id:"c52",p:"p3",t:"Sentinel value",d:"A special value indicating the end of a list, such as a list of positive integers ending with 0."},
+{id:"c53",p:"p3",m:1,t:"Algorithm",d:"A sequence of steps that solves a problem, generating correct output for any valid input values. Steps \u2014 not statements of fact."},
+{id:"c54",p:"p3",m:1,t:"When should a programmer develop an algorithm?",d:"Before writing a program to solve the problem."},
+{id:"c55",p:"p3",t:"Flowchart",d:"A graphical language for creating computer programs."},
+{id:"c56",p:"p3",t:"Pseudocode",d:"Text that resembles a program in a real programming language but is simplified to aid human understanding."},
+{id:"c57",p:"p3",t:"Nested loop",d:"A loop that appears in the body of another loop."},
+{id:"c58",p:"p3",t:"Nested branches",d:"Branches inside branches. They can take various forms, and the if-else branches may even use different variables."},
+{id:"c59",p:"p3",t:"Iteration",d:"Each time through a loop's statements."},
+{id:"c60",p:"p3",t:"Algorithm time efficiency",d:"The number of calculations required to solve a problem."},
+{id:"c61",p:"p3",m:1,t:"Ordering statements \u2014 what always comes first?",d:"The declaration. Declare the variable, then assign it, then compute, then output."},
+{id:"c62",p:"p3",t:"Program",d:"A list of statements, each statement carrying out some action and executing one at a time."},
+{id:"c63",p:"p3",t:"Input / Process / Output",d:"Input: a program gets data (file, keyboard, touchscreen, network). Process: it performs computations, like x + y. Output: it puts data somewhere (file, screen, network)."},
+
+/* ---- P4 \u00B7 data types & operators ---- */
+{id:"c70",p:"p4",m:1,t:"Integer",d:"A variable type that holds whole numbers. Use it for things you COUNT \u2014 planes in a hangar."},
+{id:"c71",p:"p4",m:1,t:"Floating-point number (float)",d:"The decimal point can appear anywhere in the number. Ex. 98.6, 0.0006. Use it for things you MEASURE \u2014 height, length."},
+{id:"c72",p:"p4",m:1,t:"Boolean",d:"A type that has just two values: true or false. Only for yes/no \u2014 never for a quantity."},
+{id:"c73",p:"p4",t:"String literal",d:"Text (characters) within double quotes."},
+{id:"c74",p:"p4",t:"Floating-point literal",d:"A number with a fractional part, even if that fraction is 0."},
+{id:"c75",p:"p4",t:"Characters",d:"Any letter (a-z, A-Z), digit (0-9), or symbol (-, !, @, etc.)."},
+{id:"c76",p:"p4",t:"Variable",d:"Used by programs to refer to data. A named item, used to hold a value."},
+{id:"c77",p:"p4",m:1,t:"Constant",d:"A named value item that holds a value that cannot change. Declared by NAME, not by value: 'Constant integer minAge', never 'Constant integer 35'."},
+{id:"c78",p:"p4",t:"Variable declaration",d:"Declares a new variable, specifying the variable's name and type."},
+{id:"c79",p:"p4",t:"Assignment statement",d:"Assigns a variable with a value, such as x = 5."},
+{id:"c80",p:"p4",t:"Expression",d:"Can be a number, a variable name (numApples), or a simple calculation like (numApples + 1)."},
+{id:"c81",p:"p4",t:"Identifier",d:"A name created by a programmer for an item like a variable or function. Must be letters, underscores and digits, and start with a letter or underscore. Case sensitive."},
+{id:"c82",p:"p4",t:"Reserved word (keyword)",d:"A word that is part of the language, like integer, Get or Put. These words cannot be used as an identifier."},
+{id:"c83",p:"p4",t:"Operator",d:"A symbol that performs a built-in calculation, like the + which performs addition."},
+{id:"c84",p:"p4",m:1,t:"Modulo operator ( % )",d:"Evaluates to the remainder of the division of two integer operands. Ex. 23 % 10 is 3. A remainder of 0 means evenly divisible."},
+{id:"c85",p:"p4",m:1,t:"Equality operator",d:"Checks whether two operands' values are the same (==) or different (!=). One equals sign assigns; two compare."},
+{id:"c86",p:"p4",t:"Relational operator",d:"Checks how one operand's value relates to another. < > <= >="},
+{id:"c87",p:"p4",t:"Logical operator",d:"Treats operands as being true or false, and evaluates to true or false. and, or, not."},
+{id:"c88",p:"p4",t:"Precedence rules",d:"An expression is evaluated using the order of standard mathematics."},
+{id:"c89",p:"p4",t:"Purpose of parentheses in an expression",d:"To group expressions."},
+{id:"c90",p:"p4",t:"Type conversion",d:"A conversion of one data type to another, such as an integer to a float."},
+{id:"c91",p:"p4",t:"Divide-by-zero error",d:"Occurs at runtime if a divisor is 0, causing a program to terminate."},
+{id:"c92",p:"p4",t:"Dividing a nonzero floating-point number by zero",d:"Gives Infinity or -Infinity."},
+{id:"c93",p:"p4",t:"Not a number (NaN)",d:"Indicates an unrepresentable or undefined value."},
+{id:"c94",p:"p4",t:"Array",d:"A special variable having one name, but storing a list of data items, with each item being directly accessible."},
+{id:"c95",p:"p4",t:"Index",d:"Each element's location number in an array."},
+{id:"c96",p:"p4",t:"Element",d:"Each item in an array. (The index is its position \u2014 don't swap them.)"},
+{id:"c97",p:"p4",t:"Epsilon",d:"The difference threshold indicating that floating-point numbers are equal."},
+{id:"c98",p:"p4",t:"Lower camel case",d:"Capitalize each word except the first, as in numApples."},
+{id:"c100",p:"p4",t:"Does the equality operator work for all data types?",d:"No. Floating-point values can't be compared reliably with == \u2014 you check whether the difference falls within a threshold called epsilon."},
+{id:"c101",p:"p4",t:"What happens if you divide an integer by a float?",d:"You get a floating-point result. With integer x = 3, (x / 2.0) + 5 evaluates to 6.5 \u2014 the 2.0 forces floating-point division."},
+{id:"c102",p:"p4",t:"What happens if you divide a float by a float?",d:"A floating-point result. float 10.2 / float 1.0 = 10.2."},
+{id:"c99",p:"p4",t:"Naming conventions",d:"A set of style guidelines defined by a company, team or teacher for naming variables."},
+
+/* ---- P5 \u00B7 functions ---- */
+{id:"c110",p:"p5",t:"Function",d:"A named list of statements, executed by invoking the function's name."},
+{id:"c111",p:"p5",t:"Function definition",d:"Consists of the new function's name and block of statements."},
+{id:"c112",p:"p5",t:"Function call",d:"An invocation of a function's name, causing the function's statements to execute."},
+{id:"c113",p:"p5",m:1,t:"Parameter",d:"A function input specified in the function DEFINITION."},
+{id:"c114",p:"p5",m:1,t:"Argument",d:"A value provided to a function's parameter during the function CALL. Any input values within ( ), separated by commas."},
+{id:"c115",p:"p5",t:"Return statement",d:"Statement that returns the specified value and immediately exits the function."},
+{id:"c116",p:"p5",t:"Return variable",d:"A function may return one value, and does so by assigning a return variable with the return value."},
+{id:"c117",p:"p5",m:1,t:"What is the return value of a function?",d:"The OUTPUT of the function \u2014 not the data passed to it. Data passed in is an argument."},
+{id:"c118",p:"p5",m:1,t:"What is a valid user-defined function name?",d:"Any valid identifier. Not a reserved word, not a number."},
+{id:"c119",p:"p5",t:"Define a function but never call it \u2014 what happens?",d:"Its statements never execute. A definition on its own produces no output."},
+{id:"c120",p:"p5",t:"Why are functions useful?",d:"One named block of statements can be reused by calling it repeatedly instead of rewriting it."},
+{id:"c121",p:"p5",t:"RandomNumber()",d:"A built-in zyFlowchart function taking two arguments, lowValue and highValue, returning a random integer in that range."},
+
+/* ---- P6 \u00B7 UML & libraries ---- */
+{id:"c130",p:"p6",t:"UML",d:"Universal Modeling Language \u2014 used to visualize requirements and design software. Used in planning, prior to when code is written."},
+{id:"c131",p:"p6",m:1,t:"Use case",d:"Describes a singular goal of ONE user and briefly outlines how they will accomplish that goal."},
+{id:"c132",p:"p6",m:1,t:"Use case diagram",d:"Models how a user interacts with a program, and provides an overview of SEVERAL use cases. Used in the Analysis phase."},
+{id:"c133",p:"p6",m:1,t:"Class diagram",d:"Models the classes, or objects, of a program \u2014 depicting each class's name, data members and functions. Used in the Design phase."},
+{id:"c134",p:"p6",m:1,t:"Sequence diagram",d:"Shows the interaction between software components and the order of events. Used in the Design phase."},
+{id:"c135",p:"p6",t:"Activity diagram",d:"A flowchart of an activity (loop, function, etc.) within the program. Used in the Implementation phase."},
+{id:"c136",p:"p6",m:1,t:"Structural diagrams",d:"UML diagrams used to design the STATIC elements of a program \u2014 the class diagram."},
+{id:"c137",p:"p6",m:1,t:"Behavioral diagrams",d:"UML diagrams used to design the DYNAMIC elements of a program \u2014 use case, sequence and activity diagrams."},
+{id:"c138",p:"p6",t:"Which UML diagrams appear in the Testing phase?",d:"Any of them can recur there. Testing may revisit any earlier diagram to confirm the program was built as designed."},
+{id:"c139",p:"p6",m:1,t:"Programming library",d:"A set of pre-written functions that carry out common tasks, that a programmer can use to improve productivity."},
+{id:"c140",p:"p6",m:1,t:"What relationship is common among a library's functions?",d:"They all relate to the same purpose."},
+{id:"c141",p:"p6",m:1,t:"What is the advantage of using a library?",d:"The code has already been tested."},
+{id:"c142",p:"p6",t:"What does a programmer do first to use an existing library?",d:"Include the library."},
+
+/* ---- shared Ch.1 vocabulary ---- */
+{id:"c150",p:"p4",t:"Bit",d:"A single 0 or 1."},
+{id:"c151",p:"p4",t:"Byte",d:"Eight bits. Ex. 11000101"},
+{id:"c152",p:"p4",t:"Binary number",d:"Using base two numbers, 0 and 1."},
+{id:"c153",p:"p4",t:"ASCII",d:"American Standard Code for Information Interchange \u2014 the numerical representation of a character. Z is stored as 1011010."},
+{id:"c154",p:"p3",t:"Moore's Law",d:"Engineers have reduced switch sizes by half about every 2 years."},
+{id:"c155",p:"p3",t:"Comment",d:"Text a programmer adds to a program, to be read by humans, but ignored by the program when executing."},
+{id:"c156",p:"p3",t:"Newline ( \\n )",d:"A special two-character sequence whose appearance in an output string literal moves the cursor to the next output line."},
+{id:"c157",p:"p3",t:"Run, execute",d:"Words for carrying out a program's statements."}
+];
+
+/* ---------- SORT ITEMS ---------- */
+var SORTS = [
+/* SDLC \u2014 her #1 pattern */
+{id:"s1",p:"p1",m:1,set:"Which SDLC phase?",b:["Analysis","Design","Implementation","Testing"],
+ items:[
+  {t:"Defines a program's goals",a:0,w:"Goals always live in Analysis."},
+  {t:"Leadership decides the system should support direct data entry and automated capture",a:0,w:"Deciding what the system must do = Analysis."},
+  {t:"Customer feedback causes the goals to change",a:0,w:"Changing goals is still Analysis, however late the feedback arrives."},
+  {t:"Creates a sequence diagram specifying the order of events between components",a:1,w:"Sequence diagrams are a Design-phase artifact."},
+  {t:"Creates a list of components needed to build an online auction site",a:1,w:"Deciding what components are needed = Design."},
+  {t:"A programmer starts writing the program in C++",a:2,w:"Typing code = Implementation."},
+  {t:"Creates an executable program",a:2,w:"Building the working program = Implementation."},
+  {t:"Begins writing a second version based on feedback",a:2,w:"Still writing code = Implementation."},
+  {t:"Programming the fourth version of a program",a:2,w:"The lap number is a decoy \u2014 writing code is Implementation."},
+  {t:"Defines a hypothesis to find a problem in a program",a:3,w:"Hunting for defects = Testing."},
+  {t:"A colleague runs the program on numerous inputs to ensure outputs are correct",a:3,w:"Verifying correct output = Testing."},
+  {t:"Runs the program hundreds of times with different input, checking each result",a:3,w:"Testing."}
+ ]},
+/* Language buckets */
+{id:"s2",p:"p2",m:1,set:"Compiled or interpreted?",b:["Compiled","Interpreted"],
+ items:[
+  {t:"C",a:0,w:"C, C++, Java and C# are compiled."},
+  {t:"C++",a:0,w:"Compiled."},
+  {t:"Java",a:0,w:"Compiled."},
+  {t:"C#",a:0,w:"Listed as compiled in your materials."},
+  {t:"Python",a:1,w:"Python, JavaScript and MATLAB are interpreted."},
+  {t:"JavaScript",a:1,w:"Interpreted."},
+  {t:"MATLAB",a:1,w:"Interpreted."},
+  {t:"Converts to machine language before running",a:0,w:"That is the definition of compiled."},
+  {t:"Runs one statement at a time by another program",a:1,w:"That is the definition of interpreted."},
+  {t:"Runs on any machine having the right interpreter",a:1,w:"Portability across machines is the interpreted advantage."},
+  {t:"Produces a separate .exe file",a:0,w:"The compiler outputs a separate machine-code file."},
+  {t:"Can be modified at run time",a:1,w:"An advantage of interpreted programs."}
+ ]},
+{id:"s3",p:"p2",m:1,set:"Which language characteristic?",b:["Statically typed","Dynamically typed","Object-oriented","Markup"],
+ items:[
+  {t:"A compiler reports an error if an integer variable is assigned a string",a:0,w:"Type errors caught by the compiler = statically typed."},
+  {t:"Once a variable holds an integer, it can only hold integers",a:0,w:"Statically typed."},
+  {t:"The same variable can be reassigned from an integer to a string later",a:1,w:"Dynamically typed."},
+  {t:"Substantially supports creating person, teacher and student items with internal data and operations",a:2,w:"Objects with data and operations = object-oriented."},
+  {t:"Supports decomposing a program into objects",a:2,w:"Object-oriented."},
+  {t:"Tags surround text to describe desired formatting",a:3,w:"Markup \u2014 it describes appearance, it doesn't compute."},
+  {t:"Considered safer, but needs more variables",a:0,w:"Statically typed."},
+  {t:"Considered easier to use and requires fewer variables",a:1,w:"Dynamically typed."}
+ ]},
+{id:"s4",p:"p2",m:1,set:"Object-oriented, or not?",b:["Object oriented","NOT object oriented","Some OO support"],
+ items:[
+  {t:"C",a:1,w:"C is the only non-object-oriented language in your materials."},
+  {t:"C++",a:0,w:"Object oriented."},
+  {t:"Java",a:0,w:"Object oriented."},
+  {t:"Python",a:0,w:"Object oriented \u2014 and the only dynamically typed one."},
+  {t:"C#",a:0,w:"Object oriented."},
+  {t:"MATLAB",a:2,w:"Provides some object-oriented support."},
+  {t:"JavaScript",a:2,w:"Provides some object-oriented support."}
+ ]},
+/* Data types */
+{id:"s5",p:"p4",m:1,set:"Which data type?",b:["Integer","Float","String","Boolean"],
+ items:[
+  {t:"A person's height in meters",a:1,w:"Measured, with a fractional part \u2192 float."},
+  {t:"Anything measured in length",a:1,w:"Measuring \u2192 float."},
+  {t:"How many planes are in a hangar",a:0,w:"Counted, whole numbers \u2192 integer."},
+  {t:"The number of seconds in a minute",a:0,w:"A whole number \u2014 and a constant, since it can't change."},
+  {t:"Whether a user is over 18",a:3,w:"A yes/no answer \u2192 Boolean."},
+  {t:"The names of all past U.S. presidents",a:2,w:"Text \u2192 string (a string array, since it's a list)."},
+  {t:"A price like 19.99",a:1,w:"Has a fractional part \u2192 float."},
+  {t:"A minimum age requirement of 35",a:0,w:"A whole number \u2014 declared as Constant integer minAge."}
+ ]},
+/* UML */
+{id:"s6",p:"p6",m:1,set:"Which UML diagram?",b:["Use case","Class","Sequence","Activity"],
+ items:[
+  {t:"Models how a user interacts with a program",a:0,w:"Use case diagram."},
+  {t:"Provides an overview of several use cases",a:0,w:"Use case diagram \u2014 the diagram shows several; a use case is one goal of one user."},
+  {t:"Depicts a class's name, data members and functions",a:1,w:"Class diagram."},
+  {t:"Models the objects of a program",a:1,w:"Class diagram."},
+  {t:"Interaction between software components and the order of events",a:2,w:"Sequence diagram."},
+  {t:"A flowchart of a loop or function within the program",a:3,w:"Activity diagram."},
+  {t:"Stick figures connected to ovals inside a system box",a:0,w:"Use case diagram."},
+  {t:"A box with + name : string and - id : integer inside it",a:1,w:"Class diagram."}
+ ]},
+{id:"s7",p:"p6",m:1,set:"Structural or behavioral?",b:["Structural","Behavioral"],
+ items:[
+  {t:"Class diagram",a:0,w:"Structural \u2014 it designs the STATIC elements."},
+  {t:"Use case diagram",a:1,w:"Behavioral \u2014 it designs DYNAMIC elements."},
+  {t:"Sequence diagram",a:1,w:"Behavioral."},
+  {t:"Activity diagram",a:1,w:"Behavioral \u2014 activity diagrams are a kind of behavioral diagram, not a third category."},
+  {t:"Designs the static elements of a program",a:0,w:"Structural."},
+  {t:"Designs the dynamic elements of a program",a:1,w:"Behavioral."}
+ ]},
+{id:"s8",p:"p6",m:1,set:"Which UML diagram belongs to which phase?",b:["Analysis","Design","Implementation","Testing"],
+ items:[
+  {t:"Use case diagrams",a:0,w:"Analysis \u2014 the big picture of user needs."},
+  {t:"Class diagrams",a:1,w:"Design."},
+  {t:"Sequence diagrams",a:1,w:"Design."},
+  {t:"Activity diagrams (code flowcharts)",a:2,w:"Implementation."},
+  {t:"Any diagram may recur here to confirm the build matched the design",a:3,w:"Testing."}
+ ]},
+/* Loop anatomy */
+{id:"s9",p:"p3",m:1,set:"Which part of the loop?",b:["Initialization","Expression","Update"],
+ items:[
+  {t:"i = 0   (in: i = 0 / while i < 20 / Put i / i = i + 1)",a:0,w:"Initialization SETS the starting value."},
+  {t:"i < 20   (same loop)",a:1,w:"The expression CHECKS the condition each pass."},
+  {t:"i = i + 1   (same loop)",a:2,w:"The update CHANGES the loop variable."},
+  {t:"y = 0   (in: y = 0 / s = 100.0 / while y < 10 / y = y + 1)",a:0,w:"Initialization \u2014 this was PA Q42."},
+  {t:"y < 10   (same loop)",a:1,w:"Expression."},
+  {t:"y = y + 1   (same loop)",a:2,w:"Update."},
+  {t:"The part that, if missing, causes an infinite loop",a:2,w:"No update means the expression never turns false."}
+ ]},
+/* Control structure choice */
+{id:"s10",p:"p3",m:1,set:"Which control structure?",b:["if-else branch","while loop","do-while loop","for loop"],
+ items:[
+  {t:"Keep accepting numbers, adding each to a sum, until a 0 is input",a:1,w:"A while loop \u2014 check before each addition."},
+  {t:"Prompt for a riddle answer, then keep prompting until it matches",a:2,w:"do-while \u2014 the prompt must happen once before there's anything to check."},
+  {t:"Iterate exactly 10 times",a:3,w:"A for loop, when you know the count."},
+  {t:"Run a block of statements only if a condition is true",a:0,w:"A branch runs at most once."},
+  {t:"Runs at most one time",a:0,w:"A branch runs zero times or once. A do-while is the one guaranteed to run at least once."},
+  {t:"Guaranteed to run at least one time",a:2,w:"do-while runs the body before checking."},
+  {t:"May run zero times",a:1,w:"A while loop checks first."}
+ ]}
+];
+
+/* ---------- TRACE ITEMS ---------- */
+var TRACES = [
+{id:"t1",p:"p3",m:1,code:"x = 3\ndo\n  Put x to output\n  Put \" \" to output\n  x = x - 1\nwhile x > 0",
+ q:"What is put to output?",o:["3 2 1 0","3 2 1 0 -1","2 1 0","3 2 1"],a:3,
+ w:"Body runs, THEN checks. Prints 3 (x\u21922, true), 2 (x\u21921, true), 1 (x\u21920, and 0 > 0 is FALSE \u2014 stop). The 0 is created but never printed."},
+{id:"t2",p:"p3",m:1,code:"count = 0\nwhile count is less than 5:\n  print 'Hello'",
+ q:"What is the result of running this?",o:["'Hello' prints four times","'Hello' prints five times","The program throws an error","'Hello' prints indefinitely"],a:3,
+ w:"Nothing ever changes count. The loop variable update is missing, so the expression never turns false \u2014 infinite loop."},
+{id:"t3",p:"p3",m:1,code:"i = 0\nwhile i < 20\n  Put i to output\n  i = i + 1",
+ q:"What is the loop EXPRESSION?",o:["i","i < 20","i = 0","i = i + 1"],a:1,
+ w:"The expression is the condition being checked. i = 0 is the initialization; i = i + 1 is the update."},
+{id:"t4",p:"p3",m:1,code:"y = 0\ns = 100.0\nwhile y < 10\n  s = s + (s * 5.0)\n  y = y + 1",
+ q:"What is the loop variable INITIALIZATION?",o:["y = 0","y = y + 1","s = 100.0","s = s + (s * 5.0)"],a:0,
+ w:"Initialization sets the LOOP variable's starting value. y = y + 1 is the update; s = 100.0 initializes a different variable, not the loop variable."},
+{id:"t5",p:"p3",m:1,code:"if x == y\n  z = 1\nelse\n  z = 0",
+ q:"What does this algorithm determine?",o:["Whether x and y are the same","Whether x and y are negative","Whether x is 1","Whether x is 0"],a:0,
+ w:"== is the equality operator: it checks whether the two values are the same. There is no negative anywhere in this code."},
+{id:"t6",p:"p3",m:1,code:"x = Get next input\nif x == -1\n  Put \"Goodbye\" to output",
+ q:"What does this algorithm accomplish?",o:["Outputs -1 when the user types any input","Outputs \"x\" when the user types -1","Outputs -1 when x is positive","Outputs Goodbye when the user types -1"],a:3,
+ w:"The -1 is a sentinel value. When the input equals it, the literal string \"Goodbye\" is printed \u2014 not the variable name, not the number."},
+{id:"t7",p:"p3",m:1,code:"i = 0\nx = 0\nwhile i < 5\n  if list[i] < 0\n    x = 1\n  i = i + 1\nPut x to output",
+ q:"On a five-element list, what does an output of 1 indicate?",o:["All integers are positive","All integers are negative","At least one integer is negative","At least one integer is positive"],a:2,
+ w:"The test is list[i] < 0 \u2014 negative. x is set to 1 the first time ANY element is negative, and never reset. So 1 means at least one negative."},
+{id:"t8",p:"p3",m:1,code:"Start\nx = Get next input\nif x < 10  -> Put \"Too young\"\nelse\n  if x < 20  -> Put \"OK\"\n  else       -> Put \"Too old\"\nEnd",
+ q:"What is put to output if the input is 17?",o:["Too young","OK","Too old","Nothing is put to output"],a:1,
+ w:"17 < 10 is false, so take the FALSE path to the second decision. 17 < 20 is true \u2192 \"OK\". Every path in this flowchart prints something."},
+{id:"t9",p:"p3",m:1,code:"An algorithm should output \"OK\" if a list's\nnumbers are all non-zero, else \"Not OK\".",
+ q:"Which is a valid test of the algorithm?",o:["Input 0, 0, 0. Ensure output is \"OK.\"","Input 5, 4, 0. Ensure output is \"OK.\"","Input -3, -2, 5. Ensure output is \"Not OK.\"","Input 99, 0, 5. Ensure output is \"Not OK.\""],a:3,
+ w:"A valid test contains the thing being detected (a zero) AND expects the right output. -3, -2, 5 are all non-zero, so \"Not OK\" would be wrong."},
+{id:"t10",p:"p3",m:1,code:"Which text represents an algorithm?",
+ q:"Pick the algorithm.",o:["Shake bulb; if it rattles, replace it.","Water is wet; fire is not wet.","Staring at the sun hurts the eyes.","The max speed is 60 mph."],a:0,
+ w:"An algorithm is a sequence of STEPS that solves a problem. The other three are statements of fact \u2014 nothing to carry out."},
+{id:"t11",p:"p4",code:"integer x = 3\ninteger y = 5",
+ q:"What is the value of (x / 2.0) + y?",o:["5.0","6.0","6.5","7.5"],a:2,
+ w:"The 2.0 makes it floating-point division: 3 / 2.0 = 1.5, then + 5 = 6.5."},
+{id:"t12",p:"p5",code:"function P(integer x) returns integer y\n  y = 2 * x",
+ q:"What does P(5) evaluate to?",o:["2","5","10","25"],a:2,
+ w:"5 is the argument passed to the parameter x. y = 2 * 5 = 10, and y is the return variable."},
+{id:"t13",p:"p5",code:"Function F()\n  Put \"Hey\" to output",
+ q:"What entire output appears after three successive calls to F()?",o:["Hey","HHHey","HeyHeyHey","Hey Hey Hey"],a:2,
+ w:"Each call runs the whole body once. Three calls, three \"Hey\" \u2014 with no space, because nothing in the function outputs one."},
+{id:"t14",p:"p5",m:1,code:"A function returns a number x cubed.\nIf x is 3, the function returns 3 * 3 * 3, or 27.",
+ q:"What should be the input to the function?",o:["x","x, x","x, x, x","27"],a:0,
+ w:"One input. The function uses that single value three times internally \u2014 the repetition in 3 * 3 * 3 is not three separate inputs."},
+{id:"t15",p:"p3",m:1,code:"Order the statements to output the minimum of x and y.",
+ q:"Which statement goes FIRST?",o:["min = x","Declare variable min","If y < min, set min = y","Put min to output"],a:1,
+ w:"Declare, then assign, then compute, then output. You can't assign to a variable that doesn't exist yet."},
+{id:"t16",p:"p4",m:1,code:"Which operator determines whether a\nnumber is evenly divisible by 5?",
+ q:"Pick the operator.",o:["+","-","*","%"],a:3,
+ w:"Modulo gives the remainder. If n % 5 is 0, n divides evenly by 5."}
+];
+
+/* ============================================================
+   DECKS
+   ============================================================ */
+var PATTERNS = {
+  p1:{n:"SDLC phases",   s:"01"},
+  p2:{n:"Language buckets", s:"02"},
+  p3:{n:"Logic & tracing",  s:"03"},
+  p4:{n:"Types & operators", s:"04"},
+  p5:{n:"Functions",        s:"05"},
+  p6:{n:"UML & libraries",  s:"06"}
+};
+var DECKS = [
+  {k:"all",  n:"Everything"},
+  {k:"miss", n:"PA Misses", cls:"miss"},
+  {k:"most", n:"Most Missed", cls:"miss"},
+  {k:"p1",   n:"01 SDLC"},
+  {k:"p2",   n:"02 Languages"},
+  {k:"p3",   n:"03 Logic"},
+  {k:"p4",   n:"04 Types"},
+  {k:"p5",   n:"05 Functions"},
+  {k:"p6",   n:"06 UML"}
+];
+
+function poolFor(mode){
+  if (mode === "sort")  return SORTS;
+  if (mode === "trace") return TRACES;
+  return CARDS;
+}
+function filterDeck(pool, deck){
+  if (deck === "all")  return pool.slice();
+  if (deck === "miss") return pool.filter(function(x){ return x.m; });
+  if (deck === "most") return pool.filter(function(x){ return S.missed[x.id]; });
+  return pool.filter(function(x){ return x.p === deck; });
+}
+function shuffle(a){
+  a = a.slice();
+  for (var i=a.length-1;i>0;i--){ var j=Math.floor(Math.random()*(i+1)); var t=a[i]; a[i]=a[j]; a[j]=t; }
+  return a;
+}
+function markMiss(id){ S.missed[id] = (S.missed[id]||0)+1; persist(); }
+function healMiss(id){ if (S.missed[id]) { delete S.missed[id]; persist(); } }
+
+/* ============================================================
+   STATE + RENDER
+   ============================================================ */
+var mode = S.mode, deck = S.deck;
+var queue = [], pos = 0, flipped = false, answered = false, streak = 0;
+var right = 0, wrong = 0, sessionMisses = [];
+var sortFlat = [];   // flattened sort items for the current queue
+
+var stage      = document.getElementById("stage");
+var deckRow    = document.getElementById("deckRow");
+var modeRow    = document.getElementById("modeRow");
+var progFill   = document.getElementById("progFill");
+var countTxt   = document.getElementById("countTxt");
+var streakNum  = document.getElementById("streakNum");
+var streakBox  = document.getElementById("streakBox");
+var subtitle   = document.getElementById("subtitle");
+
+document.getElementById("saveNote").textContent =
+  Store.kind === "memory" ? "Saving unavailable \u2014 progress lasts this session only"
+                          : "Progress saves automatically";
+
+function drawDecks(){
+  var pool = poolFor(mode);
+  deckRow.innerHTML = "";
+  DECKS.forEach(function(d){
+    var items = filterDeck(pool, d.k);
+    var n = (mode === "sort")
+      ? items.reduce(function(s,x){ return s + x.items.length; }, 0)
+      : items.length;
+    var b = document.createElement("button");
+    if (d.cls) b.className = d.cls;
+    b.innerHTML = d.n + '<span class="ct">' + n + '</span>';
+    b.setAttribute("aria-pressed", d.k === deck ? "true" : "false");
+    b.disabled = n === 0;
+    b.addEventListener("click", function(){
+      deck = d.k; S.deck = deck; persist(); start();
+    });
+    deckRow.appendChild(b);
+  });
+}
+Array.prototype.forEach.call(modeRow.querySelectorAll("button"), function(b){
+  b.addEventListener("click", function(){
+    mode = b.dataset.mode; S.mode = mode; persist();
+    Array.prototype.forEach.call(modeRow.querySelectorAll("button"), function(x){
+      x.setAttribute("aria-pressed", x.dataset.mode === mode ? "true" : "false");
+    });
+    start();
+  });
+  b.setAttribute("aria-pressed", b.dataset.mode === mode ? "true" : "false");
+});
+
+function setStreak(n){
+  streak = n; streakNum.textContent = n;
+  streakBox.className = "streakbox" + (n >= 3 ? " hot" : "");
+}
+function setBar(){
+  var total = (mode === "sort") ? sortFlat.length : queue.length;
+  var done  = Math.min(pos, total);
+  progFill.style.width = total ? (done/total*100) + "%" : "0%";
+  countTxt.textContent = done + " / " + total;
+}
+function tagFor(item){
+  var pat = PATTERNS[item.p];
+  var lab = pat ? pat.s + " " + pat.n : "";
+  var cls = item.m ? "tag miss" : "tag";
+  var txt = item.m ? "PA miss \u00B7 " + lab : lab;
+  return '<span class="' + cls + '">' + txt + '</span>';
+}
+function esc(s){
+  return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+}
+
+function start(){
+  var pool = filterDeck(poolFor(mode), deck);
+  queue = shuffle(pool);
+  if (mode === "sort"){
+    sortFlat = [];
+    queue.forEach(function(set){
+      set.items.forEach(function(it,i){
+        sortFlat.push({ setId:set.id, id:set.id+"-"+i, p:set.p, m:set.m,
+                        buckets:set.b, label:set.set, t:it.t, a:it.a, w:it.w });
+      });
+    });
+    sortFlat = shuffle(sortFlat);
+  }
+  pos = 0; right = 0; wrong = 0; sessionMisses = [];
+  setStreak(0);
+  drawDecks();
+  var total = (mode === "sort")
+    ? queue.reduce(function(s,x){ return s + x.items.length; }, 0)
+    : queue.length;
+  subtitle.textContent = deck === "most"
+    ? "Your own most-missed items \u00B7 " + total
+    : (deck === "miss" ? "Pre-assessment misses only \u00B7 " + total
+                       : (deck === "all" ? "All 3 competencies \u00B7 " + total + " items"
+                                         : PATTERNS[deck].s + " " + PATTERNS[deck].n + " \u00B7 " + total));
+  render();
+}
+
+function render(){
+  setBar();
+  var total = (mode === "sort") ? sortFlat.length : queue.length;
+  if (total === 0){ renderEmpty(); return; }
+  if (pos >= total){ renderDone(); return; }
+  if (mode === "flip")  return renderFlip();
+  if (mode === "match") return renderMatch();
+  if (mode === "sort")  return renderSort();
+  return renderTrace();
+}
+
+function renderEmpty(){
+  stage.innerHTML =
+    '<div class="done"><h2>Nothing in this deck</h2>' +
+    '<p>' + (deck === "most"
+      ? "Your Most Missed deck is empty \u2014 that's the goal. Drill another deck and anything you miss lands here."
+      : "This mode has no items for that deck. Pick another.") + '</p></div>';
+}
+
+/* ---- FLIP ---- */
+function renderFlip(){
+  var c = queue[pos];
+  stage.innerHTML =
+    tagFor(c) +
+    '<div class="flip" id="flipCard">' +
+      '<div class="front">' + esc(c.t) + '</div>' +
+      (flipped ? '<div class="back">' + esc(c.d) + '</div>'
+               : '<div class="hint">Tap to reveal</div>') +
+    '</div>' +
+    (flipped
+      ? '<div class="acts">' +
+          '<button class="again" id="againBtn">Again</button>' +
+          '<button class="got" id="gotBtn">Got it</button>' +
+        '</div>'
+      : '');
+
+  document.getElementById("flipCard").addEventListener("click", function(){
+    if (!flipped){ flipped = true; render(); }
+  });
+  if (flipped){
+    document.getElementById("againBtn").addEventListener("click", function(){
+      markMiss(c.id);
+      queue.push(c);                 // re-queue until owned
+      setStreak(0);
+      flipped = false; pos++; drawDecks(); render();
+    });
+    document.getElementById("gotBtn").addEventListener("click", function(){
+      healMiss(c.id);
+      setStreak(streak+1);
+      flipped = false; pos++; drawDecks(); render();
+    });
+  }
+}
+
+/* ---- SPEED MATCH ---- */
+function renderMatch(){
+  var c = queue[pos];
+  var pool = filterDeck(CARDS, deck);
+  if (pool.length < 4) pool = CARDS;
+  var isQ = c.t.slice(-1) === "?";
+  var wrongs = shuffle(pool.filter(function(x){
+    return x.id !== c.id && ((x.t.slice(-1) === "?") === isQ);
+  })).slice(0,3);
+  if (wrongs.length < 3){
+    var extra = shuffle(pool.filter(function(x){
+      return x.id !== c.id && wrongs.indexOf(x) === -1;
+    })).slice(0, 3 - wrongs.length);
+    wrongs = wrongs.concat(extra);
+  }
+  var opts = shuffle([c].concat(wrongs));
+
+  stage.innerHTML =
+    tagFor(c) +
+    '<div class="prompt"><span class="ask">' + (isQ ? "Which question does this answer?" : "Which term is this?") + '</span>' + esc(c.d) + '</div>' +
+    '<div class="opts" id="opts"></div>' +
+    '<div id="after"></div>';
+
+  var box = document.getElementById("opts");
+  opts.forEach(function(o){
+    var b = document.createElement("button");
+    b.textContent = o.t;
+    b.addEventListener("click", function(){ answer(o.id === c.id, b, box, opts, c, c.id, "The answer is <b>" + esc(c.t) + "</b>. " + esc(c.d)); });
+    box.appendChild(b);
+  });
+}
+
+/* ---- SORT ---- */
+function renderSort(){
+  var it = sortFlat[pos];
+  stage.innerHTML =
+    tagFor(it) +
+    '<div class="prompt"><span class="ask">' + esc(it.label) + '</span>' + esc(it.t) + '</div>' +
+    '<div class="buckets" id="opts"></div>' +
+    '<div id="after"></div>';
+
+  var box = document.getElementById("opts");
+  it.buckets.forEach(function(name, i){
+    var b = document.createElement("button");
+    b.textContent = name;
+    b.addEventListener("click", function(){
+      answer(i === it.a, b, box, null, {t:it.t}, it.setId,
+             "<b>" + esc(it.buckets[it.a]) + ".</b> " + esc(it.w),
+             it.a);
+    });
+    box.appendChild(b);
+  });
+}
+
+/* ---- TRACE ---- */
+function renderTrace(){
+  var t = queue[pos];
+  var order = shuffle(t.o.map(function(txt,i){ return {txt:txt, i:i}; }));
+  stage.innerHTML =
+    tagFor(t) +
+    '<pre>' + esc(t.code) + '</pre>' +
+    '<div class="prompt"><span class="ask">Predict it</span>' + esc(t.q) + '</div>' +
+    '<div class="opts" id="opts"></div>' +
+    '<div id="after"></div>';
+
+  var box = document.getElementById("opts");
+  order.forEach(function(o){
+    var b = document.createElement("button");
+    b.textContent = o.txt;
+    b.addEventListener("click", function(){
+      answer(o.i === t.a, b, box, null, t, t.id,
+             "<b>" + esc(t.o[t.a]) + ".</b> " + esc(t.w));
+    });
+    box.appendChild(b);
+  });
+}
+
+/* ---- shared answer handler ---- */
+function answer(isRight, btn, box, opts, item, id, whyHTML, correctIdx){
+  var kids = Array.prototype.slice.call(box.children);
+  kids.forEach(function(k){ k.disabled = true; });
+  btn.classList.add(isRight ? "right" : "wrong");
+
+  if (!isRight){
+    if (typeof correctIdx === "number"){
+      kids[correctIdx].classList.add("right");
+    } else if (opts){
+      kids.forEach(function(k,i){ if (opts[i] && opts[i].id === item.id) k.classList.add("right"); });
+    } else {
+      kids.forEach(function(k){ if (k !== btn && k.textContent === (item.o ? item.o[item.a] : "")) k.classList.add("right"); });
+    }
+    kids.forEach(function(k){ if (!k.classList.contains("right") && k !== btn) k.classList.add("dim"); });
+    markMiss(id);
+    wrong++;
+    sessionMisses.push(item.t || item.q || "");
+    setStreak(0);
+  } else {
+    kids.forEach(function(k){ if (k !== btn) k.classList.add("dim"); });
+    healMiss(id);
+    right++;
+    setStreak(streak+1);
+  }
+  drawDecks();
+
+  var after = document.getElementById("after");
+  after.innerHTML =
+    (isRight ? "" : '<div class="why">' + whyHTML + '</div>') +
+    '<button class="next" id="nextBtn">' + (isRight ? "Next" : "Got it \u2014 next") + '</button>';
+  document.getElementById("nextBtn").addEventListener("click", function(){ pos++; render(); });
+}
+
+/* ---- DONE ---- */
+function renderDone(){
+  var total = right + wrong;
+  var pct = total ? Math.round(right/total*100) : 100;
+  var html =
+    '<div class="done">' +
+      (total ? '<div class="score">' + pct + '%</div><p>' + right + ' right \u00B7 ' + wrong + ' missed</p>'
+             : '<h2>Deck complete</h2><p>Every card owned.</p>') +
+      '<button id="againAll">Run it again</button>';
+  if (sessionMisses.length){
+    html += '<div class="misslist"><span class="lab">Missed this round</span><ul>';
+    sessionMisses.slice(0,12).forEach(function(m){ html += '<li>' + esc(m) + '</li>'; });
+    html += '</ul></div>';
+  }
+  html += '</div>';
+  stage.innerHTML = html;
+  document.getElementById("againAll").addEventListener("click", start);
+}
+
+var resetBtn = document.getElementById("resetBtn"), resetArmed = false, resetTimer = null;
+resetBtn.addEventListener("click", function(){
+  if (!resetArmed){
+    resetArmed = true;
+    resetBtn.textContent = "Tap again to confirm";
+    resetTimer = setTimeout(function(){
+      resetArmed = false; resetBtn.textContent = "Reset all progress";
+    }, 4000);
+    return;
+  }
+  clearTimeout(resetTimer);
+  resetArmed = false; resetBtn.textContent = "Reset all progress";
+  Store.clear();
+  S = { missed:{}, mode:mode, deck:deck };
+  persist(); start();
+});
+
+start();
+</script>
+</body>
+</html>
