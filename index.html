@@ -1,9 +1,4 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="color-scheme" content="light">
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1"><style>:root{color-scheme:light}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found]){display:none!important}</style></head><body>
 <title>D278 Drill</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -92,6 +87,14 @@ button:focus-visible{outline:2px solid var(--teal);outline-offset:2px}
 .tag.miss{background:var(--red-soft);color:var(--red)}
 
 /* flip card */
+.dirbtn{
+  display:block;width:100%;text-align:left;
+  font-family:var(--f-m);font-size:11px;letter-spacing:.08em;text-transform:uppercase;
+  color:var(--ink-2);background:var(--card);border:1px solid var(--line);
+  border-radius:6px;padding:9px 13px;margin-bottom:9px;cursor:pointer;
+}
+.dirbtn:hover{border-color:var(--teal);color:var(--teal)}
+.dirbtn b{color:var(--teal)}
 .flip{
   background:var(--card);border:1px solid var(--line);border-radius:10px;
   padding:30px 24px;min-height:230px;display:flex;flex-direction:column;
@@ -189,14 +192,13 @@ pre{
 }
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
-</head>
-<body>
+
 <div class="app">
 
   <div class="mast">
     <div>
       <h1>D278 Drill</h1>
-      <p id="subtitle">All 3 competencies &middot; 122 cards</p>
+      <p id="subtitle">All 3 competencies &middot; 128 cards</p>
     </div>
     <div class="streakbox" id="streakBox">
       <b id="streakNum">0</b><span>Streak</span>
@@ -307,6 +309,7 @@ var CARDS = [
 {id:"c13",p:"p1",t:"Incremental development",d:"Writing, compiling and testing a small amount of code, then writing, compiling and testing a small amount more, and so on."},
 {id:"c14",p:"p1",t:"Modular development",d:"Dividing a program into separate modules that can be developed and tested separately, then integrated into a single program."},
 {id:"c15",p:"p1",t:"Waterfall pros and cons",d:"Pros: simple, easy to manage, phases completed one at a time, clearly defined stages, well documented. Cons: no working software until late, high risk, can't accommodate changing requirements, integration is a big bang at the end."},
+{id:"c17",p:"p1",t:"SDLC verb rule",d:"Ignore the story, find the verb. Deciding goals = Analysis. Planning how (diagrams, component lists) = Design. Writing code, any version = Implementation. Running it or hunting for a problem = Testing."},
 {id:"c16",p:"p1",t:"Agile pros and cons",d:"Pros: realistic, promotes teamwork, delivers early partial working solutions, suits changing requirements, flexible. Cons: poor with complex dependencies, needs a real agile lead, depends heavily on customer interaction, thin documentation makes handoff hard."},
 
 /* ---- P2 \u00B7 language buckets ---- */
@@ -403,6 +406,7 @@ var CARDS = [
 {id:"c118",p:"p5",m:1,t:"What is a valid user-defined function name?",d:"Any valid identifier. Not a reserved word, not a number."},
 {id:"c119",p:"p5",t:"Define a function but never call it \u2014 what happens?",d:"Its statements never execute. A definition on its own produces no output."},
 {id:"c120",p:"p5",t:"Why are functions useful?",d:"One named block of statements can be reused by calling it repeatedly instead of rewriting it."},
+{id:"c122",p:"p5",t:"A function has input x and output z. What does it return?",d:"z only. A function returns its output; x is the input it receives."},
 {id:"c121",p:"p5",t:"RandomNumber()",d:"A built-in zyFlowchart function taking two arguments, lowValue and highValue, returning a random integer in that range."},
 
 /* ---- P6 \u00B7 UML & libraries ---- */
@@ -419,6 +423,7 @@ var CARDS = [
 {id:"c140",p:"p6",m:1,t:"What relationship is common among a library's functions?",d:"They all relate to the same purpose."},
 {id:"c141",p:"p6",m:1,t:"What is the advantage of using a library?",d:"The code has already been tested."},
 {id:"c142",p:"p6",t:"What does a programmer do first to use an existing library?",d:"Include the library."},
+{id:"c143",p:"p6",t:"Which elements are characteristic of a class diagram?",d:"The system's classes, attributes and methods, plus their features, constraints and relationships. Flow of logic belongs to behavioral diagrams, not class diagrams."},
 
 /* ---- shared Ch.1 vocabulary ---- */
 {id:"c150",p:"p4",t:"Bit",d:"A single 0 or 1."},
@@ -600,8 +605,35 @@ var TRACES = [
  w:"Declare, then assign, then compute, then output. You can't assign to a variable that doesn't exist yet."},
 {id:"t16",p:"p4",m:1,code:"Which operator determines whether a\nnumber is evenly divisible by 5?",
  q:"Pick the operator.",o:["+","-","*","%"],a:3,
- w:"Modulo gives the remainder. If n % 5 is 0, n divides evenly by 5."}
+ w:"Modulo gives the remainder. If n % 5 is 0, n divides evenly by 5."},
+{id:"t17",p:"p4",code:"i == 20",
+ q:"What kind of operator is the == ?",o:["Assignment","Arithmetic","Equality","Logical"],a:2,
+ w:"Two equals signs compare: equality. One equals sign (=) is assignment."},
+{id:"t18",p:"p5",code:"Function MyFct\n  input:  x\n  output: z",
+ q:"What does MyFct return?",o:["Nothing","x only","z only","x and z"],a:2,
+ w:"A function returns its output. x is the input it receives; z is what comes back."},
+{id:"t19",p:"p3",code:"A program keeps accepting input numbers,\nadding each to a sum, until a 0 is input.",
+ q:"Which control structure should be used?",o:["If statement","For loop","Multiple if statements","While loop"],a:3,
+ w:"You don't know how many numbers are coming, so not a for loop. A while loop repeats until the sentinel 0 arrives."},
+{id:"t20",p:"p3",code:"Prompt the player for a riddle answer.\nCheck if it does not match the correct answer.\nKeep prompting until it matches.",
+ q:"Which control structure supports this?",o:["For loop","While loop","Do-while loop","If-else branch"],a:2,
+ w:"The prompt must happen at least once before there is anything to check. Body first, check second = do-while."},
+{id:"t21",p:"p3",code:"Build a pyramid (large on bottom, small on top):\n1. Clear table.\n2. ???\n3. Place middle-sized shape.\n4. ???",
+ q:"What goes in step 2?",o:["Place smallest shape.","Place largest shape.","Place middle-sized shape.","Clear table."],a:1,
+ w:"The bottom goes down first, so the largest shape is placed first and the smallest last. You got this right in August \u2014 slow down and reread."}
 ];
+
+/* ---------- ATTEMPT #2 MISSES (Sep 30) ----------
+   PA Q: 1,3,13,14,17,23,35,36,37,38,41,45,51,52,55,57,58,59,60,63,65,66,68,70 */
+var M2 = {
+  c1:1,c2:1,c3:1,c4:1,c5:1,c6:1,c8:1,c17:1,
+  c21:1,c23:1,c32:1,c71:1,c85:1,
+  c42:1,c46:1,c47:1,c53:1,
+  c117:1,c122:1,
+  c132:1,c133:1,c134:1,c141:1,c142:1,c143:1,
+  s1:1,s2:1,s5:1,s6:1,s8:1,s9:1,s10:1,
+  t3:1,t9:1,t10:1,t17:1,t18:1,t19:1,t20:1,t21:1
+};
 
 /* ============================================================
    DECKS
@@ -616,7 +648,8 @@ var PATTERNS = {
 };
 var DECKS = [
   {k:"all",  n:"Everything"},
-  {k:"miss", n:"PA Misses", cls:"miss"},
+  {k:"m2",   n:"PA #2 Misses", cls:"miss"},
+  {k:"miss", n:"PA #1 Misses", cls:"miss"},
   {k:"most", n:"Most Missed", cls:"miss"},
   {k:"p1",   n:"01 SDLC"},
   {k:"p2",   n:"02 Languages"},
@@ -634,6 +667,7 @@ function poolFor(mode){
 function filterDeck(pool, deck){
   if (deck === "all")  return pool.slice();
   if (deck === "miss") return pool.filter(function(x){ return x.m; });
+  if (deck === "m2")   return pool.filter(function(x){ return M2[x.id]; });
   if (deck === "most") return pool.filter(function(x){ return S.missed[x.id]; });
   return pool.filter(function(x){ return x.p === deck; });
 }
@@ -648,6 +682,7 @@ function healMiss(id){ if (S.missed[id]) { delete S.missed[id]; persist(); } }
 /* ============================================================
    STATE + RENDER
    ============================================================ */
+if (!S.m2seen){ S.deck = "m2"; S.m2seen = 1; persist(); }   // open on the new deck once
 var mode = S.mode, deck = S.deck;
 var queue = [], pos = 0, flipped = false, answered = false, streak = 0;
 var right = 0, wrong = 0, sessionMisses = [];
@@ -709,8 +744,9 @@ function setBar(){
 function tagFor(item){
   var pat = PATTERNS[item.p];
   var lab = pat ? pat.s + " " + pat.n : "";
-  var cls = item.m ? "tag miss" : "tag";
-  var txt = item.m ? "PA miss \u00B7 " + lab : lab;
+  var is2 = item.m2 || M2[item.id];
+  var cls = (item.m || is2) ? "tag miss" : "tag";
+  var txt = is2 ?"PA #2 miss \u00B7 " + lab : (item.m ? "PA miss \u00B7 " + lab : lab);
   return '<span class="' + cls + '">' + txt + '</span>';
 }
 function esc(s){
@@ -724,7 +760,7 @@ function start(){
     sortFlat = [];
     queue.forEach(function(set){
       set.items.forEach(function(it,i){
-        sortFlat.push({ setId:set.id, id:set.id+"-"+i, p:set.p, m:set.m,
+        sortFlat.push({ setId:set.id, id:set.id+"-"+i, p:set.p, m:set.m, m2:M2[set.id],
                         buckets:set.b, label:set.set, t:it.t, a:it.a, w:it.w });
       });
     });
@@ -738,7 +774,8 @@ function start(){
     : queue.length;
   subtitle.textContent = deck === "most"
     ? "Your own most-missed items \u00B7 " + total
-    : (deck === "miss" ? "Pre-assessment misses only \u00B7 " + total
+    : deck === "m2" ? "Attempt #2 misses \u00B7 " + total
+    : (deck === "miss" ? "Attempt #1 misses \u00B7 " + total
                        : (deck === "all" ? "All 3 competencies \u00B7 " + total + " items"
                                          : PATTERNS[deck].s + " " + PATTERNS[deck].n + " \u00B7 " + total));
   render();
@@ -766,11 +803,19 @@ function renderEmpty(){
 /* ---- FLIP ---- */
 function renderFlip(){
   var c = queue[pos];
+  var rev = S.rev !== false;                    // default: exam direction
+  var isQ = c.t.slice(-1) === "?";              // question cards always lead with the question
+  var front = (rev && !isQ) ? c.d : c.t;
+  var back  = (rev && !isQ) ? c.t : c.d;
   stage.innerHTML =
+    '<button class="dirbtn" id="dirBtn">' +
+      (rev ? 'Front: <b>meaning</b> \u00B7 exam direction \u00B7 tap to switch'
+           : 'Front: <b>term</b> \u00B7 recall practice \u00B7 tap to switch') +
+    '</button>' +
     tagFor(c) +
     '<div class="flip" id="flipCard">' +
-      '<div class="front">' + esc(c.t) + '</div>' +
-      (flipped ? '<div class="back">' + esc(c.d) + '</div>'
+      '<div class="front">' + esc(front) + '</div>' +
+      (flipped ? '<div class="back">' + esc(back) + '</div>'
                : '<div class="hint">Tap to reveal</div>') +
     '</div>' +
     (flipped
@@ -782,6 +827,12 @@ function renderFlip(){
 
   document.getElementById("flipCard").addEventListener("click", function(){
     if (!flipped){ flipped = true; render(); }
+  });
+  document.getElementById("dirBtn").addEventListener("click", function(){
+    S.rev = !(S.rev !== false);
+    persist();
+    flipped = false;
+    render();
   });
   if (flipped){
     document.getElementById("againBtn").addEventListener("click", function(){
@@ -941,11 +992,11 @@ resetBtn.addEventListener("click", function(){
   clearTimeout(resetTimer);
   resetArmed = false; resetBtn.textContent = "Reset all progress";
   Store.clear();
-  S = { missed:{}, mode:mode, deck:deck };
+  S = { missed:{}, mode:mode, deck:deck, m2seen:1 };
   persist(); start();
 });
 
 start();
 </script>
-</body>
-</html>
+
+</body></html>
