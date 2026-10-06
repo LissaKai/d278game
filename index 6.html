@@ -1,0 +1,280 @@
+<title>D278 Mock OA</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700&family=Karla:wght@400;500;700&family=IBM+Plex+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: one long exam column, sticky score bar, three competency sections, grade report at the end.
+   Single deliberate light theme matching the D278 Drill game (sage paper, ink, teal right, red miss). */
+:root{
+  --paper:#F3F5F1; --card:#FFFFFF; --ink:#26302B; --ink-2:#5A6A60; --ink-3:#7E8D83;
+  --line:#D9DFD6; --teal:#4E8D6E; --teal-dk:#3A6B53; --teal-soft:#E5EFE8;
+  --red:#B04747; --red-soft:#FAEBEB; --gold:#8A6A14; --gold-soft:#F5EEDB; --code:#EBEFE8;
+  --f-d:"Sora",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  --f-b:"Karla",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  --f-m:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+  color-scheme:light;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--f-b);font-size:16.5px;line-height:1.55}
+.app{max-width:680px;margin:0 auto;padding-inline:16px;padding-block:0 64px}
+
+.mast{padding-block:28px 6px}
+.mast h1{font-family:var(--f-d);font-weight:700;font-size:26px;letter-spacing:-.01em;margin:0;line-height:1.15;text-wrap:balance}
+.mast p{margin:8px 0 0;color:var(--ink-2);font-size:15.5px;max-width:60ch}
+.eyebrow{font-family:var(--f-m);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3)}
+
+.bar{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--paper);
+  padding-block:12px;border-bottom:1px solid var(--line);margin-bottom:8px;display:flex;align-items:center;gap:12px}
+.prog{flex:1;height:6px;background:var(--line);border-radius:99px;overflow:hidden;display:flex}
+.prog i{display:block;height:100%}
+.prog .r{background:var(--teal)} .prog .w{background:var(--red)}
+.tally{font-family:var(--f-m);font-size:12px;color:var(--ink-2);font-variant-numeric:tabular-nums;white-space:nowrap}
+.tally b{color:var(--teal-dk)} .tally s{text-decoration:none;color:var(--red)}
+.btn{font-family:var(--f-d);font-weight:600;font-size:14px;padding:10px 14px;border-radius:7px;border:1px solid var(--ink);
+  background:var(--ink);color:var(--paper);cursor:pointer;white-space:nowrap}
+.btn.ghost{background:transparent;color:var(--ink-2);border-color:var(--line)}
+.btn:focus-visible,.opt:focus-visible{outline:2px solid var(--teal);outline-offset:2px}
+
+.sec{margin-top:34px}
+.sec h2{font-family:var(--f-d);font-size:19px;margin:0 0 2px;display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:baseline}
+.sec h2 span{font-family:var(--f-m);font-size:11px;font-weight:400;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3)}
+.sec .covers{color:var(--ink-2);font-size:14.5px;margin:0 0 14px}
+
+.q{background:var(--card);border:1px solid var(--line);border-radius:9px;padding:18px;margin-bottom:12px}
+.q .n{font-family:var(--f-m);font-size:11px;color:var(--ink-3);letter-spacing:.06em;margin-bottom:6px;display:block}
+.q .stem{font-size:17px;line-height:1.45;margin:0 0 12px;font-weight:500}
+pre{font-family:var(--f-m);font-size:13.5px;line-height:1.6;background:var(--code);border:1px solid var(--line);
+  border-radius:7px;padding:12px 14px;margin:0 0 12px;overflow-x:auto;white-space:pre}
+.opts{display:grid;gap:7px}
+.opt{font-family:var(--f-b);font-size:15.5px;text-align:left;line-height:1.4;background:var(--card);color:var(--ink);
+  border:1px solid var(--line);border-radius:7px;padding:11px 14px;cursor:pointer}
+.opt:hover:not(:disabled){border-color:var(--teal)}
+.opt:disabled{cursor:default}
+.opt.right{background:var(--teal);border-color:var(--teal);color:#fff;font-weight:700}
+.opt.wrong{background:var(--red);border-color:var(--red);color:#fff;font-weight:700}
+.opt.dim{opacity:.45}
+.why{margin-top:10px;padding:12px 14px;border-radius:7px;font-size:15px;line-height:1.5;
+  background:var(--gold-soft);border:1px solid #DECDA6;border-left:4px solid var(--gold);color:var(--ink)}
+.why b{color:var(--gold)}
+.q.miss{border-color:#E3C4C4}
+
+.report{margin-top:34px;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:22px}
+.report h2{font-family:var(--f-d);font-size:21px;margin:0 0 4px}
+.big{font-family:var(--f-d);font-size:46px;font-weight:700;line-height:1;margin:10px 0 4px;font-variant-numeric:tabular-nums}
+.note{color:var(--ink-2);font-size:14.5px;margin:0 0 16px}
+.rows{display:grid;gap:10px;margin-bottom:18px}
+.row{display:grid;grid-template-columns:1fr auto;gap:4px 12px;align-items:center}
+.row .lbl{font-weight:700;font-size:15px;min-width:0}
+.row .pct{font-family:var(--f-m);font-size:13px;font-variant-numeric:tabular-nums}
+.row .track{grid-column:1/-1;height:7px;background:var(--line);border-radius:99px;overflow:hidden}
+.row .track i{display:block;height:100%;background:var(--teal)}
+.row .track i.low{background:var(--red)}
+.misslist{margin:0;padding-left:20px}
+.misslist li{margin-bottom:6px;font-size:15px;color:var(--ink-2)}
+.misslist a{color:var(--ink);font-weight:700}
+.foot{margin-top:18px;display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:center}
+.save{font-family:var(--f-m);font-size:11px;color:var(--ink-3)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
+</style>
+
+<div class="app">
+  <header class="mast">
+    <span class="eyebrow">Scripting &amp; Programming Foundations &middot; Mock OA</span>
+    <h1>D278 Mock OA</h1>
+    <p>70 fresh questions, none copied from the pre-assessment, weighted like the real exam. Your first tap counts. Use the 3-second pause before every answer.</p>
+  </header>
+
+  <div class="bar">
+    <div class="prog" aria-hidden="true"><i class="r" id="pR"></i><i class="w" id="pW"></i></div>
+    <span class="tally" id="tally">0 / 70</span>
+    <button class="btn" id="gradeTop">Grade Me</button>
+  </div>
+
+  <main id="exam"></main>
+
+  <section class="report" id="report" hidden></section>
+
+  <div class="foot">
+    <span class="save" id="saveNote"></span>
+    <button class="btn ghost" id="resetBtn">Start a new attempt</button>
+  </div>
+</div>
+
+<script>
+/* ---------- storage: window.storage -> localStorage -> memory ---------- */
+var Store=(function(){
+  var KEY="d278mock.v1",mem={},be=null,kind="memory";
+  try{ if(window.storage&&typeof window.storage.getItem==="function"){be=window.storage;kind="window.storage";} }catch(e){}
+  if(!be){ try{ localStorage.setItem("__t","1");localStorage.removeItem("__t");be=localStorage;kind="localStorage"; }catch(e){} }
+  return {kind:kind,
+    read:function(){ if(!be)return mem; try{return JSON.parse(be.getItem(KEY)||"{}");}catch(e){return {};} },
+    write:function(o){ if(!be){mem=o;return;} try{be.setItem(KEY,JSON.stringify(o));}catch(e){mem=o;} }};
+})();
+var S=Store.read(); if(!S.a)S.a={};   /* a: question id -> chosen option text */
+function save(){Store.write(S);}
+
+/* ---------- questions: o[0] is always the correct answer; options shuffle on every load ---------- */
+var COMP=[
+ {k:1,n:"Identifies Scripts",w:"40%",covers:"Program basics, variables, data types, operators, expressions, arrays, language types, libraries"},
+ {k:2,n:"Uses Programming Elements",w:"20%",covers:"Functions, branches, loops"},
+ {k:3,n:"Explains Logic and Outcome of Algorithms",w:"40%",covers:"Tracing pseudocode, algorithms, SDLC, UML"}
+];
+var Q=[
+/* ===== Competency 1: Identifies Scripts (28) ===== */
+{c:1,q:"Every statement in a program does one of three jobs. Which set names them?",o:["Get input, process data, put output","Compile, link, run","Declare, assign, delete","Read, sort, print"],w:"A program's statements get input, process data, or put output (Ch. 1)."},
+{c:1,q:"Which part of a program is ignored when the program runs?",o:["A comment","A string literal","A variable","An assignment statement"],w:"Comments are for humans only. The program skips them when it runs."},
+{c:1,q:"How does pseudocode represent a program?",o:["Textually and informally","Graphically and formally","Graphically and informally","As machine code"],w:"Pseudocode is an informal, text-based version of a program, written for people to read. A flowchart is the graphical one."},
+{c:1,q:"How is the letter Q stored inside a computer?",o:["As bits: a pattern of 0s and 1s","As a picture of the letter","As a flowchart node","As a decimal number written to the screen"],w:"All data inside a computer, including characters, is represented as bits."},
+{c:1,q:"What appears on the screen?",code:"Put \"Line1\\nLine2\" to output",o:["Line1 on one line, Line2 on the next line","Line1\\nLine2 on one line","Line1Line2","Line1 Line2"],w:"\\n is the newline character. It moves the cursor to the next line, so it never prints as text."},
+{c:1,q:"Which statement assigns totalCost with the sum of price and tax?",o:["totalCost = price + tax","price + tax = totalCost","totalCost == price + tax","totalCost = price * tax"],w:"The variable being assigned goes on the LEFT of a single =. Two equals signs compare instead of assign."},
+{c:1,q:"A variable will hold the number of students enrolled in a class. Which data type fits?",o:["Integer","Float","String","Boolean"],w:"Students are counted in whole numbers. Counted = integer."},
+{c:1,q:"A variable will hold the average rainfall per day for a month. Which data type fits?",o:["Float","Integer","String","Boolean"],w:"An average is measured and has a fractional part. Measured = float."},
+{c:1,q:"A variable will hold a customer's last name. Which data type fits?",o:["String","Integer","Float","Boolean"],w:"Text is a string."},
+{c:1,q:"A program uses the number of days in a week in many calculations. How should that item be declared?",o:["Constant integer daysPerWeek","Variable integer daysPerWeek","Constant integer 7","Constant float daysPerWeek"],w:"It never changes, so it's a constant. Name it, don't number it, and days are whole numbers, so integer."},
+{c:1,q:"Given integer x = 7 and integer y = 2. What is x / y?",o:["3","3.5","4","1"],w:"Both operands are integers, so / does integer division and drops the fraction: 7 / 2 = 3."},
+{c:1,q:"Given integer x = 7 and integer y = 2. What is x % y?",o:["1","3","3.5","0"],w:"% gives the remainder. 7 divided by 2 is 3 remainder 1."},
+{c:1,q:"Given integer x = 4. What is (x / 2.0) + 1?",o:["3.0","3","2.0","5.0"],w:"The 2.0 makes it floating-point division: 4 / 2.0 = 2.0, then + 1 = 3.0."},
+{c:1,q:"What is the value of 2 + 3 * 4?",o:["14","20","24","9"],w:"Precedence rules follow standard math: multiply first (3 * 4 = 12), then add 2."},
+{c:1,q:"What is the role of the * in the expression x - y * 5?",o:["Arithmetic operator","Assignment operator","Relational operator","Logical operator"],w:"* performs a calculation (multiplication), so it's arithmetic."},
+{c:1,q:"Which of these is a relational operator?",o:["<=","=","+","and"],w:"Relational operators compare how two values relate: < <= > >=. = assigns, + is arithmetic, and is logical."},
+{c:1,q:"Which of these is a logical operator?",o:["not","!=","%","=="],w:"The logical operators are and, or, not. != and == are equality operators."},
+{c:1,q:"A program divides an integer by 0 while it runs. What happens?",o:["A divide-by-zero error occurs and the program terminates","The result is 0","The result is the original number","The statement is skipped"],w:"Division by zero is undefined, so a runtime error stops the program."},
+{c:1,q:"Which is a valid identifier?",o:["numStudents","2ndPlace","integer","total cost"],w:"Identifiers use letters, digits and underscores, start with a letter or underscore, contain no spaces, and can't be reserved words like integer."},
+{c:1,q:"A program stores the daily high temperature for every day in a month. What is the best declaration?",o:["Float array","Float scalar","String array","Boolean scalar"],w:"Many values of the same kind = array. Temperatures are measured = float."},
+{c:1,q:"In which kind of language can a variable's type change while the program runs?",o:["Dynamically typed","Statically typed","Markup","Compiled"],w:"Dynamically typed languages let a variable's type change at run time. Statically typed languages fix it at declaration."},
+{c:1,q:"Which language is run one statement at a time by an interpreter?",o:["Python","C","C++","Java"],w:"Python is interpreted. C, C++ and Java are compiled."},
+{c:1,q:"What kind of language is HTML?",o:["Markup","Object-oriented","Statically typed","Compiled"],w:"HTML doesn't execute. It uses tags to describe formatting, which makes it a markup language."},
+{c:1,q:"A language substantially supports breaking a program into objects that each have data and actions. Which characteristic is that?",o:["Object-oriented","Dynamically typed","Statically typed","Markup"],w:"Objects with their own data and operations = object-oriented."},
+{c:1,q:"Which describes a compiled language?",o:["It is converted to machine code before it runs","An interpreter runs it one statement at a time","It runs on any machine that has the right interpreter","Tags around text describe formatting"],w:"Compiled = translated into machine code first, then run. The middle two describe interpreted languages."},
+{c:1,q:"What is typically found in a programming library?",o:["Pre-written functions","A user's main program","A list of scalar variables","A compiler"],w:"A library is a set of pre-written functions for common tasks."},
+{c:1,q:"Why do programmers use libraries?",o:["The functions are pre-written and already tested","The code must be rewritten for each program","A library replaces the main program","A library works in every programming language"],w:"Libraries improve productivity: the functions already exist and have already been tested."},
+{c:1,q:"What does a statically typed language require?",o:["Declaring a variable's type, which then can't change","Running one statement at a time","Using tags around text","Building the program from objects"],w:"Statically typed = the type is declared and fixed, so the compiler can report type errors."},
+
+/* ===== Competency 2: Uses Programming Elements (14) ===== */
+{c:2,q:"What does G(5) evaluate to?",code:"Function G(integer x) returns integer y\n   y = (x - 1) * 3",o:["12","14","15","4"],w:"x = 5, so (5 - 1) * 3 = 4 * 3 = 12."},
+{c:2,q:"What does Square(AddOne(2)) evaluate to?",code:"Function Square(integer x) returns integer y\n   y = x * x\nFunction AddOne(integer x) returns integer y\n   y = x + 1",o:["9","5","4","6"],w:"Work inside out. AddOne(2) = 3, then Square(3) = 9."},
+{c:2,q:"What does PrintB() output?",code:"Function PrintA()\n   Put \"A \" to output\nFunction PrintB()\n   PrintA()\n   Put \"B \" to output",o:["A B","B A","B","A"],w:"PrintB calls PrintA first, which outputs A, then PrintB outputs B."},
+{c:2,q:"In this function, what is len?",code:"Function Area(float len, float wid) returns float a\n   a = len * wid",o:["A function parameter","A function argument","A return variable","A function name"],w:"Inputs listed in the function DEFINITION are parameters. Values passed in a CALL are arguments."},
+{c:2,q:"For the call Area(3.0, 4.0), what is 3.0?",o:["A function argument","A function parameter","A return variable","A function name"],w:"A value provided in the CALL is an argument. It fills the parameter len."},
+{c:2,q:"A function computes a total price from an item's price and the quantity bought. What should be input to the function?",o:["Price and quantity","Total price only","Price only","Quantity only"],w:"Inputs are what the function needs to do its work. The total is the output."},
+{c:2,q:"A function converts a temperature from Celsius to Fahrenheit. What should be output from the function?",o:["The Fahrenheit temperature","The Celsius temperature","Both temperatures","Nothing"],w:"The output (return value) is the result the function produces. Celsius is the input."},
+{c:2,q:"A function is defined in a program but never called. What happens to its statements?",o:["They never execute","They execute once when the program starts","They execute after the Main function ends","They cause an error"],w:"A definition alone does nothing. Statements run only when the function is called."},
+{c:2,q:"Where does a program's execution begin?",o:["The Main function","The first function defined","The last function defined","The first function called by another function"],w:"Execution begins with the Main function (Ch. 6)."},
+{c:2,q:"A program should output \"Freezing\" if the temperature is below 32. Otherwise it outputs nothing. Which structure fits?",o:["If","If-else","If-elseif","While loop"],w:"Only one action, with nothing in the other case = a plain if."},
+{c:2,q:"A program should output \"Pass\" if a score is 70 or higher, and \"Fail\" otherwise. Which structure fits?",o:["If-else","If","If-elseif","For loop"],w:"Exactly two outcomes, one or the other = if-else."},
+{c:2,q:"A program outputs \"A\" for scores of 90 or more, \"B\" for 80 or more, and \"C\" otherwise. Which structure fits?",o:["If-elseif","If-else","Multiple independent ifs","Do-while loop"],w:"Ranges where only one outcome may run = if-elseif."},
+{c:2,q:"A program should keep reading numbers and adding them to a total until the user enters -1. Which structure fits?",o:["While loop","For loop","If-else","If-elseif"],w:"The count is unknown and depends on input, so a while loop runs until the done value appears."},
+{c:2,q:"A program must ask for a PIN at least once and keep asking while the PIN is wrong. Which structure fits?",o:["Do-while loop","While loop","For loop","If-else"],w:"Must run at least once before there's anything to check = do-while."},
+
+/* ===== Competency 3: Explains Logic and Outcome of Algorithms (28) ===== */
+{c:3,q:"What is put to output?",code:"x = 12\nwhile x > 5\n   Put x to output\n   Put \" \" to output\n   x = x - 3",o:["12 9 6","12 9 6 3","12 9","9 6 3"],w:"12 prints, x = 9. 9 prints, x = 6. 6 > 5, so 6 prints, x = 3. 3 > 5 is false, stop."},
+{c:3,q:"What is put to output?",code:"x = 1\ndo\n   Put x to output\n   Put \" \" to output\n   x = x * 2\nwhile x < 10",o:["1 2 4 8","1 2 4 8 16","2 4 8","1 2 4"],w:"The body runs first, then checks. Prints 1, 2, 4, 8. Then x = 16, and 16 < 10 is false, so it stops before printing 16."},
+{c:3,q:"What is put to output?",code:"x = 25\nif x < 20\n   Put \"Low\" to output\nelseif x < 30\n   Put \"Mid\" to output\nelse\n   Put \"High\" to output",o:["Mid","Low","High","LowMid"],w:"25 < 20 is false. 25 < 30 is true, so Mid runs, and the else is skipped."},
+{c:3,q:"What is put to output?",code:"x = 8\nif x < 10\n   Put \"A\" to output\nif x < 5\n   Put \"B\" to output\nif x > 2\n   Put \"C\" to output",o:["AC","A","ABC","C"],w:"These are separate ifs, so each one is checked. 8 < 10 true (A), 8 < 5 false, 8 > 2 true (C)."},
+{c:3,q:"What is the loop expression?",code:"i = 3\nwhile i <= 30\n   Put i to output\n   i = i + 3",o:["i <= 30","i = 3","i = i + 3","i"],w:"The loop expression is the condition checked each pass."},
+{c:3,q:"What is the loop variable update?",code:"count = 10\ntotal = 0\nwhile count > 0\n   total = total + count\n   count = count - 1",o:["count = count - 1","total = total + count","count = 10","count > 0"],w:"The update changes the LOOP variable, count. total changes too, but it isn't the loop variable."},
+{c:3,q:"In the same code, what is the loop variable initialization?",code:"count = 10\ntotal = 0\nwhile count > 0\n   total = total + count\n   count = count - 1",o:["count = 10","total = 0","count > 0","count = count - 1"],w:"Initialization sets the LOOP variable's starting value. total = 0 sets a different variable."},
+{c:3,q:"What happens when this code runs?",code:"n = 1\nwhile n < 5\n   Put n to output",o:["1 is output forever","1 2 3 4 is output","Nothing is output","1 2 3 4 5 is output"],w:"Nothing changes n, so n < 5 is always true. Missing update = infinite loop."},
+{c:3,q:"What does this algorithm output for a four-element list?",code:"total = 0\ni = 0\nwhile i < 4\n   total = total + list[i]\n   i = i + 1\nPut total / 4 to output",o:["The average of the four values","The largest value","The number of negative values","The sum of the first two values"],w:"It adds every element, then divides by how many there are. That's an average."},
+{c:3,q:"What does this algorithm output for a five-element list?",code:"max = list[0]\ni = 1\nwhile i < 5\n   if list[i] > max\n      max = list[i]\n   i = i + 1\nPut max to output",o:["The largest value","The smallest value","The first value","The last value"],w:"max only changes when a bigger value is found, so it ends as the largest."},
+{c:3,q:"The input is 3, then 7, then 0. What is put to output?",code:"x = Get next input\nwhile x != 0\n   Put x * x to output\n   Put \" \" to output\n   x = Get next input",o:["9 49","9 49 0","3 7","3 7 0"],w:"3 * 3 = 9, 7 * 7 = 49. When 0 arrives, x != 0 is false, so the loop ends before squaring it."},
+{c:3,q:"Which text represents an algorithm?",o:["Check the tire pressure. If it is below 30, add air until it reads 32.","Tires need air to work properly.","The recommended tire pressure is 32.","Low tire pressure wastes fuel."],w:"An algorithm is a sequence of steps that solves a problem. The others are statements of fact."},
+{c:3,q:"An algorithm should decide whether a number is even. It gives the correct output for an input of 4. Is the algorithm correct?",o:["Unknown","Yes","No","Only for even inputs"],w:"One correct test doesn't prove correctness. An algorithm must be right for ALL valid inputs."},
+{c:3,q:"What does an algorithm's time efficiency measure?",o:["The number of calculations needed to solve a problem","How many lines of code it has","How long it took to write","Whether its output is correct"],w:"Time efficiency = number of calculations. Correctness is a separate question."},
+{c:3,q:"An algorithm outputs \"All positive\" if every number in a list is greater than 0, else \"Not all positive\". Which is a valid test?",o:["Input 4, -2, 7. Ensure output is \"Not all positive.\"","Input 3, 5, 8. Ensure output is \"Not all positive.\"","Input -1, -2, -3. Ensure output is \"All positive.\"","Input 0, 0, 0. Ensure output is \"All positive.\""],w:"A valid test pairs an input with the output the rule really requires. -2 is not positive, so \"Not all positive\" is correct."},
+{c:3,q:"To output the area of a rectangle, which statement comes first?",o:["Declare variables len, wid and area","area = len * wid","Put area to output","Assign len and wid their values"],w:"Declare first, then assign, then compute, then output. A variable has to exist before it can hold a value."},
+{c:3,q:"A team interviews users to decide what a new app must do. Which SDLC phase is this?",o:["Analysis","Design","Implementation","Testing"],w:"Deciding goals and requirements = Analysis."},
+{c:3,q:"A team draws diagrams showing how the program's components will be built and connected. Which phase is this?",o:["Design","Analysis","Implementation","Testing"],w:"Planning HOW to build it, including diagrams = Design."},
+{c:3,q:"In an agile project, a developer writes the code for the third version of the login screen. Which phase is this?",o:["Implementation","Analysis","Design","Testing"],w:"Writing code is always Implementation, whatever the version number."},
+{c:3,q:"A tester runs the checkout feature with many different inputs, looking for wrong results. Which phase is this?",o:["Testing","Implementation","Design","Analysis"],w:"Running it to find problems = Testing."},
+{c:3,q:"After a demo, the customer asks for an offline mode, and the team adds it to the program's goals. Which phase handles this?",o:["Analysis","Design","Implementation","Testing"],w:"Changing goals is Analysis, even when it comes from late feedback."},
+{c:3,q:"A customer demands requirement changes in the middle of development. Which approach handles this more easily?",o:["Agile (spiral)","Waterfall","Both handle it equally","Neither can handle changes"],w:"Agile repeats its phases, so it can absorb changes. Waterfall can't easily go back to an earlier phase."},
+{c:3,q:"With which approach is a project's time to completion usually easier to estimate?",o:["Waterfall","Agile (spiral)","Both equally","Neither"],w:"Waterfall runs each phase once in order, so progress is easy to measure."},
+{c:3,q:"In an agile approach, what is the maximum number of times the implementation phase is carried out?",o:["No maximum","1","0","4"],w:"Agile repeats the phases cycle after cycle, so there is no fixed maximum."},
+{c:3,q:"Which UML diagram is most likely part of the Analysis phase, which defines a program's goals?",o:["Use case diagram","Class diagram","Activity diagram","Sequence diagram"],w:"Use case diagrams capture how users interact with the system, which is goal-level information."},
+{c:3,q:"Which UML diagram shows a program's classes, including their data members and functions?",o:["Class diagram","Use case diagram","Sequence diagram","Activity diagram"],w:"Class diagram = each class's name, data members and functions."},
+{c:3,q:"What does a use case diagram show?",o:["How users interact with a program, across several use cases","The data members of each class","The order of events between components","A flowchart of one function"],w:"A use case diagram gives an overview of several use cases and how users interact with the program."},
+{c:3,q:"Which UML diagram is a structural diagram?",o:["Class diagram","Use case diagram","Sequence diagram","Activity diagram"],w:"Structural diagrams show static items, like classes. Use case, sequence and activity diagrams are behavioral."}
+];
+Q.forEach(function(x,i){ x.id="q"+(i+1); x.num=i+1; });
+
+/* ---------- render ---------- */
+function shuffle(a){a=a.slice();for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=a[i];a[i]=a[j];a[j]=t;}return a;}
+function esc(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
+var exam=document.getElementById("exam");
+
+function build(){
+  exam.innerHTML="";
+  COMP.forEach(function(c){
+    var qs=Q.filter(function(x){return x.c===c.k;});
+    var sec=document.createElement("section"); sec.className="sec";
+    sec.innerHTML='<h2>'+esc(c.n)+'<span>'+c.w+' &middot; '+qs.length+' questions</span></h2><p class="covers">'+esc(c.covers)+'</p>';
+    qs.forEach(function(x){ sec.appendChild(card(x)); });
+    exam.appendChild(sec);
+  });
+  tally();
+}
+function card(x){
+  var d=document.createElement("div"); d.className="q"; d.id=x.id;
+  d.innerHTML='<span class="n">Question '+x.num+'</span><p class="stem">'+esc(x.q)+'</p>'+(x.code?'<pre>'+esc(x.code)+'</pre>':'')+'<div class="opts"></div><div class="after"></div>';
+  var box=d.querySelector(".opts");
+  shuffle(x.o).forEach(function(t){
+    var b=document.createElement("button"); b.className="opt"; b.textContent=t;
+    b.addEventListener("click",function(){ if(S.a[x.id]!==undefined)return; S.a[x.id]=t; save(); mark(d,x); tally(); });
+    box.appendChild(b);
+  });
+  if(S.a[x.id]!==undefined) mark(d,x);
+  return d;
+}
+function mark(d,x){
+  var pick=S.a[x.id], right=x.o[0], ok=pick===right;
+  Array.prototype.forEach.call(d.querySelectorAll(".opt"),function(b){
+    b.disabled=true;
+    if(b.textContent===right) b.classList.add("right");
+    else if(b.textContent===pick) b.classList.add("wrong");
+    else b.classList.add("dim");
+  });
+  d.classList.toggle("miss",!ok);
+  d.querySelector(".after").innerHTML='<div class="why"><b>'+(ok?"Right.":"Answer: "+esc(right)+".")+'</b> '+esc(x.w)+'</div>';
+}
+function counts(){
+  var r=0,w=0; Q.forEach(function(x){ var p=S.a[x.id]; if(p===undefined)return; if(p===x.o[0])r++; else w++; }); return {r:r,w:w};
+}
+function tally(){
+  var c=counts(), n=Q.length;
+  document.getElementById("pR").style.width=(c.r/n*100)+"%";
+  document.getElementById("pW").style.width=(c.w/n*100)+"%";
+  document.getElementById("tally").innerHTML=(c.r+c.w)+' / '+n+' &middot; <b>'+c.r+' right</b> &middot; <s>'+c.w+' missed</s>';
+}
+
+/* ---------- grade ---------- */
+function grade(){
+  var rep=document.getElementById("report"), c=counts(), n=Q.length;
+  var pct=Math.round(c.r/n*100);
+  var html='<span class="eyebrow">Grade report</span><h2>Your score</h2><div class="big">'+pct+'%</div>'+
+    '<p class="note">'+c.r+' of '+n+' right. '+(n-c.r-c.w)+' unanswered (counted as wrong). Aim for 80% or higher on two separate attempts before you retake the PA.</p><div class="rows">';
+  COMP.forEach(function(k){
+    var qs=Q.filter(function(x){return x.c===k.k;}), r=qs.filter(function(x){return S.a[x.id]===x.o[0];}).length, p=Math.round(r/qs.length*100);
+    html+='<div class="row"><span class="lbl">'+esc(k.n)+' <span class="eyebrow">'+k.w+'</span></span><span class="pct">'+r+'/'+qs.length+' &middot; '+p+'%</span><div class="track"><i class="'+(p<70?"low":"")+'" style="width:'+p+'%"></i></div></div>';
+  });
+  html+='</div>';
+  var miss=Q.filter(function(x){return S.a[x.id]!==undefined&&S.a[x.id]!==x.o[0];});
+  if(miss.length){
+    html+='<span class="eyebrow">Missed this attempt</span><ul class="misslist">';
+    miss.forEach(function(x){ html+='<li><a href="#'+x.id+'">Q'+x.num+'</a> &middot; '+esc(x.q)+'</li>'; });
+    html+='</ul>';
+  }
+  rep.innerHTML=html; rep.hidden=false; rep.scrollIntoView({behavior:"smooth",block:"start"});
+}
+document.getElementById("gradeTop").addEventListener("click",grade);
+
+/* ---------- reset (two-tap confirm, no dialogs) ---------- */
+var rb=document.getElementById("resetBtn"),armed=false,tm=null;
+rb.addEventListener("click",function(){
+  if(!armed){armed=true;rb.textContent="Tap again to clear answers";tm=setTimeout(function(){armed=false;rb.textContent="Start a new attempt";},4000);return;}
+  clearTimeout(tm);armed=false;rb.textContent="Start a new attempt";
+  S={a:{}};save();document.getElementById("report").hidden=true;build();window.scrollTo(0,0);
+});
+document.getElementById("saveNote").textContent=Store.kind==="memory"?"Saving unavailable \u2014 answers last this session only":"Answers save automatically";
+build();
+</script>
